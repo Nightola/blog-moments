@@ -1,217 +1,87 @@
-:root {
-    --accent-color: #6a8caf;
-    --bg-color: #f4f7f9;
-    --card-bg: #ffffff;
-    --text-main: #333;
-    --text-light: #888;
+/* 基础变量与全局设置 */
+:root { 
+    --width: 1000px; 
+    --text-color: #444; 
+    --link-color: #3273dc; 
+    --accent-color: #576b95; 
 }
 
-body {
-    margin: 0;
-    font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
-    background-color: var(--bg-color);
-    color: var(--text-main);
+body { 
+    font-family: sans-serif; 
+    margin: auto; 
+    padding: 20px; 
+    max-width: var(--width); 
+    background-image: url("https://pic1.imgdb.cn/item/6946acea29a616e528622615.jpg"); 
+    background-attachment: fixed; 
+    background-size: cover; 
+    color: var(--text-color); 
+    line-height: 1.6; 
 }
 
-header {
-    background: #fff;
-    padding: 30px 20px;
-    text-align: center;
-    border-bottom: 1px solid #eee;
-}
+/* 导航栏 */
+header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
+nav { display: flex; gap: 10px; }
+nav a { text-decoration: none; color: var(--text-color); font-weight: bold; cursor: pointer; padding: 6px 12px; border-radius: 6px; transition: 0.3s; }
+nav a.active { color: white; background: var(--link-color); }
 
-header h1 {
-    margin: 0 0 15px 0;
-    font-size: 1.5rem;
+/* 主容器布局 */
+.container { display: flex; gap: 25px; align-items: flex-start; }
+.main-content { 
+    flex: 1; 
+    min-width: 0; 
+    background: rgba(255, 255, 255, 0.4); 
+    backdrop-filter: blur(10px); 
+    padding: 25px; 
+    border-radius: 16px; 
+    min-height: 500px; 
+    overflow: hidden; 
 }
-
-#modeNav a {
-    margin: 0 15px;
-    text-decoration: none;
-    color: var(--text-light);
-    font-size: 0.9rem;
-    cursor: pointer;
-    padding-bottom: 5px;
-}
-
-#modeNav a.active {
-    color: var(--accent-color);
-    border-bottom: 2px solid var(--accent-color);
-    font-weight: bold;
-}
-
-.container {
-    max-width: 1000px;
-    margin: 20px auto;
-    display: flex;
-    gap: 20px;
-    padding: 0 20px;
-}
-
-/* 主内容区 */
-.main-content {
-    flex: 1;
-}
-
-.year-bar {
-    margin-bottom: 15px;
-}
-
-.filter-btn {
-    border: none;
-    background: #e0e0e0;
-    padding: 5px 12px;
-    border-radius: 4px;
-    margin-right: 8px;
-    cursor: pointer;
-    font-size: 0.85rem;
-}
-
-.filter-btn.active {
-    background: var(--accent-color);
-    color: #fff;
-}
-
-/* 动态卡片样式 */
-.moment-card {
-    background: var(--card-bg);
-    padding: 20px;
-    margin-bottom: 15px;
-    border-radius: 8px;
-    display: flex;
-    gap: 15px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-}
-
-.item-avatar {
-    width: 45px;
-    height: 45px;
-    border-radius: 4px;
-}
-
-.moment-text {
-    margin: 10px 0;
-    line-height: 1.6;
-    white-space: pre-wrap;
-}
-
-.moment-text.collapsed {
-    display: -webkit-box;
-    -webkit-line-clamp: 5;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-
-.expand-btn {
-    color: var(--accent-color);
-    cursor: pointer;
-    font-size: 0.9rem;
-    margin-bottom: 10px;
-}
-
-.moment-gallery {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-    margin-top: 10px;
-    max-width: 400px;
-}
-
-.moment-gallery img {
-    width: 100%;
-    aspect-ratio: 1;
-    object-fit: cover;
-    border-radius: 4px;
-    cursor: zoom-in;
-}
-
-.moment-video {
-    max-width: 100%;
-    border-radius: 8px;
-    margin-top: 10px;
-}
-
-/* 音乐卡片 */
-.music-share-card {
-    display: flex;
-    align-items: center;
-    background: #f7f7f7;
-    padding: 10px;
-    border-radius: 6px;
-    text-decoration: none;
-    color: inherit;
-    gap: 12px;
-    margin-top: 10px;
-}
-
-.music-cover {
-    width: 50px;
-    height: 50px;
-    border-radius: 4px;
-}
-
-.music-title { font-weight: bold; }
-.music-artist { font-size: 0.8rem; color: #888; }
 
 /* 侧边栏 */
-.sidebar {
-    width: 280px;
-}
+.sidebar { width: 280px; position: sticky; top: 20px; display: flex; flex-direction: column; gap: 20px; flex-shrink: 0; }
+.side-card { background: rgba(255, 255, 255, 0.5); backdrop-filter: blur(10px); padding: 20px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.3); }
+.side-title { font-size: 0.9rem; font-weight: bold; color: var(--accent-color); margin-bottom: 15px; border-left: 4px solid var(--accent-color); padding-left: 8px; }
 
-.side-card {
-    background: #fff;
-    padding: 20px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-}
+/* 统计与词云 */
+.stat-list { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+.stat-num { font-size: 1.2rem; font-weight: bold; color: #333; display: block; }
+.stat-label { font-size: 0.7rem; color: #777; }
+#wordcloud-container { width: 100%; height: 200px; display: flex; align-items: center; justify-content: center; }
+.no-data-hint { font-size: 0.8rem; color: #888; text-align: center; }
 
-.side-title {
-    font-weight: bold;
-    margin-bottom: 15px;
-    color: var(--accent-color);
-}
+/* 筛选按钮 */
+.year-bar { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+.filter-btn { cursor: pointer; border: none; background: rgba(255,255,255,0.4); padding: 4px 12px; border-radius: 15px; font-size: 0.8rem; }
+.filter-btn.active { background: var(--accent-color); color: white; }
 
-.stat-list {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
-}
+/* 动态卡片 */
+.moment-card { padding: 20px 0; border-bottom: 1px solid rgba(0, 0, 0, 0.05); display: flex; gap: 12px; }
+.item-avatar { width: 42px; height: 42px; border-radius: 6px; object-fit: cover; flex-shrink: 0; }
+.moment-text { font-size: 0.95rem; white-space: pre-wrap; margin: 8px 0; }
+.moment-text.collapsed { max-height: 8em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; }
+.expand-btn { color: var(--accent-color); cursor: pointer; font-size: 0.85rem; font-weight: bold; margin-bottom: 10px; display: inline-block; }
 
-.stat-item { text-align: center; }
-.stat-num { display: block; font-size: 1.2rem; font-weight: bold; }
-.stat-label { font-size: 0.8rem; color: #888; }
+/* 媒体展示 */
+.moment-gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; max-width: 400px; margin-top: 10px; }
+.moment-gallery img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 4px; cursor: pointer; }
+.moment-video { width: 100%; max-width: 450px; border-radius: 8px; margin-top: 10px; background: #000; }
+.music-share-card { display: flex; align-items: center; background: rgba(255, 255, 255, 0.3); border: 1px solid rgba(0, 0, 0, 0.05); padding: 10px; border-radius: 8px; max-width: 320px; cursor: pointer; transition: 0.2s; text-decoration: none; color: inherit; margin-top: 10px; }
+.music-share-card:hover { background: rgba(255, 255, 255, 0.5); }
+.music-cover { width: 50px; height: 50px; border-radius: 6px; object-fit: cover; margin-right: 12px; flex-shrink: 0; }
+.music-title { font-size: 0.9rem; font-weight: bold; color: #333; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.music-artist { font-size: 0.75rem; color: #777; }
 
-#wordcloud-container {
-    width: 100%;
-    height: 200px;
-}
+/* 纯相册网格 */
+.album-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; width: 100%; }
+.album-item { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; cursor: pointer; transition: 0.2s; border: 1px solid rgba(255,255,255,0.2); }
+.album-item:hover { transform: scale(1.03); }
 
-/* 相册模式 */
-.album-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 10px;
-}
+/* 图片查看器 */
+#image-viewer { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 9999; justify-content: center; align-items: center; }
+#viewer-img { max-width: 90%; max-height: 90%; border-radius: 4px; }
 
-.album-item {
-    width: 100%;
-    aspect-ratio: 1;
-    object-fit: cover;
-    border-radius: 4px;
-}
-
-/* 查看器 */
-#image-viewer {
-    position: fixed;
-    top:0; left:0; width:100%; height:100%;
-    background: rgba(0,0,0,0.8);
-    display: none;
-    justify-content: center;
-    align-items: center;
-    z-index: 999;
-}
-
-#image-viewer img {
-    max-width: 90%;
-    max-height: 90%;
+/* 移动端适配 */
+@media (max-width: 850px) {
+    .container { flex-direction: column; }
+    .sidebar { width: 100%; position: static; }
 }
