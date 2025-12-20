@@ -17,56 +17,44 @@
         .moment-card { padding: 20px 0; border-bottom: 1px solid rgba(0, 0, 0, 0.05); display: flex; gap: 12px; }
         .moment-avatar-wrap { flex-shrink: 0; }
         .item-avatar { width: 42px; height: 42px; border-radius: 6px; object-fit: cover; }
-        .moment-body { flex-grow: 1; display: flex; flex-direction: column; gap: 8px; }
+        .moment-body { flex-grow: 1; display: flex; flex-direction: column; gap: 8px; overflow: hidden; }
         .moment-author { font-weight: 700; color: #576b95; }
-        .moment-text { font-size: 0.95rem; line-height: 1.5; color: var(--text-color); white-space: pre-wrap; }
+        
+        /* --- ✨ 文字折叠核心 CSS --- */
+        .moment-text { 
+            font-size: 0.95rem; 
+            line-height: 1.5; 
+            color: var(--text-color); 
+            white-space: pre-wrap;
+            word-break: break-all;
+            position: relative;
+        }
+        .moment-text.collapsed {
+            max-height: 7.5em; /* 1.5行高 * 5行 = 7.5em */
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 5; /* 限制显示5行 */
+            -webkit-box-orient: vertical;
+        }
+        .expand-btn {
+            color: #576b95;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: bold;
+            margin-top: 4px;
+            display: none; /* 默认隐藏，由JS控制显示 */
+        }
+        /* --------------------------- */
+
         .moment-date { font-size: 0.75rem; color: #b2b2b2; }
 
-        /* 🎵 朋友圈风格音乐卡片 (重点美化部分) */
-        .music-share-card {
-            display: flex;
-            align-items: center;
-            background: rgba(0, 0, 0, 0.03); /* 极浅的底色 */
-            border: 1px solid rgba(0, 0, 0, 0.05);
-            padding: 8px;
-            border-radius: 4px;
-            max-width: 320px;
-            cursor: pointer;
-            transition: background 0.2s;
-            text-decoration: none; /* 去除链接下划线 */
-            color: inherit;
-        }
-        .music-share-card:hover {
-            background: rgba(0, 0, 0, 0.06);
-        }
-        .music-cover {
-            width: 45px;
-            height: 45px;
-            border-radius: 4px;
-            object-fit: cover;
-            margin-right: 10px;
-            flex-shrink: 0;
-            background: #eee; /* 无封面时的占位色 */
-        }
-        .music-info {
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-        .music-title {
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: #333;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .music-artist {
-            font-size: 0.75rem;
-            color: #888;
-            margin-top: 2px;
-        }
+        /* 🎵 音乐卡片样式 */
+        .music-share-card { display: flex; align-items: center; background: rgba(0, 0, 0, 0.03); border: 1px solid rgba(0, 0, 0, 0.05); padding: 8px; border-radius: 4px; max-width: 320px; cursor: pointer; transition: background 0.2s; text-decoration: none; color: inherit; }
+        .music-share-card:hover { background: rgba(0, 0, 0, 0.06); }
+        .music-cover { width: 45px; height: 45px; border-radius: 4px; object-fit: cover; margin-right: 10px; flex-shrink: 0; background: #eee; }
+        .music-info { overflow: hidden; display: flex; flex-direction: column; justify-content: center; }
+        .music-title { font-size: 0.9rem; font-weight: 600; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .music-artist { font-size: 0.75rem; color: #888; margin-top: 2px; }
 
         /* 🖼️ 相册与视频样式 */
         .album-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; padding-top: 10px; }
@@ -130,7 +118,6 @@
         const years = [...new Set(globalData.map(d => d.year))].sort().reverse();
         const allBtn = document.getElementById('btn-all');
         allBtn.onclick = () => { currentYear = 'all'; updateActiveBtn(allBtn); render(); };
-
         years.forEach(year => {
             const btn = document.createElement('button');
             btn.className = 'filter-btn';
@@ -160,27 +147,17 @@
     }
 
     function renderMoments(data) {
-        data.forEach(item => {
+        data.forEach((item, index) => {
             let mediaHtml = '';
-            
-            // 🎬 视频逻辑
             if (item.video) {
                 mediaHtml = `<video class="moment-video" controls src="${item.video}" preload="metadata"></video>`;
-            } 
-            // 🎵 音乐逻辑 (朋友圈风格卡片)
-            else if (item.music) {
-                const coverUrl = item.music.cover || 'https://pic1.imgdb.cn/item/6946acea29a616e528622615.jpg'; // 默认占位图
-                mediaHtml = `
-                    <a href="${item.music.url}" target="_blank" class="music-share-card">
-                        <img src="${coverUrl}" class="music-cover">
-                        <div class="music-info">
-                            <div class="music-title">${item.music.title}</div>
-                            <div class="music-artist">${item.music.artist}</div>
-                        </div>
-                    </a>`;
-            } 
-            // 🖼️ 图片逻辑
-            else if (item.imgs && item.imgs.length > 0) {
+            } else if (item.music) {
+                const coverUrl = item.music.cover || 'https://pic1.imgdb.cn/item/6946acea29a616e528622615.jpg';
+                mediaHtml = `<a href="${item.music.url}" target="_blank" class="music-share-card">
+                        <img src="${coverUrl}" class="music-cover"><div class="music-info">
+                        <div class="music-title">${item.music.title}</div><div class="music-artist">${item.music.artist}</div>
+                        </div></a>`;
+            } else if (item.imgs && item.imgs.length > 0) {
                 const imgList = item.imgs.map(src => `<img src="${src}" onclick="openViewer('${src}')">`).join('');
                 mediaHtml = `<div class="moment-gallery ${item.imgs.length === 1 ? 'single' : ''}">${imgList}</div>`;
             }
@@ -191,12 +168,39 @@
                 <div class="moment-avatar-wrap"><img src="images/avatar.jpg" class="item-avatar"></div>
                 <div class="moment-body">
                     <div class="moment-author">亚离解星</div>
-                    <div class="moment-text">${item.text}</div>
+                    <div id="text-${index}" class="moment-text collapsed">${item.text}</div>
+                    <div id="btn-${index}" class="expand-btn" onclick="toggleText(${index})">全文</div>
                     ${mediaHtml}
                     <div class="moment-date">${item.date}</div>
                 </div>`;
             display.appendChild(card);
+
+            //渲染后检查高度
+            setTimeout(() => {
+                const textElem = document.getElementById(`text-${index}`);
+                const btnElem = document.getElementById(`btn-${index}`);
+                // 7.5em 是 5 行的高度 (1.5 line-height * 5)
+                // 这里加一点余量判断
+                if (textElem.scrollHeight > textElem.offsetHeight) {
+                    btnElem.style.display = 'block';
+                } else {
+                    textElem.classList.remove('collapsed');
+                }
+            }, 0);
         });
+    }
+
+    // ✨ 切换展开/收起函数
+    function toggleText(index) {
+        const textElem = document.getElementById(`text-${index}`);
+        const btnElem = document.getElementById(`btn-${index}`);
+        if (textElem.classList.contains('collapsed')) {
+            textElem.classList.remove('collapsed');
+            btnElem.innerText = '收起';
+        } else {
+            textElem.classList.add('collapsed');
+            btnElem.innerText = '全文';
+        }
     }
 
     function renderAlbum(data) {
@@ -206,9 +210,7 @@
             if (item.imgs) {
                 item.imgs.forEach(src => {
                     const img = document.createElement('img');
-                    img.className = 'album-item';
-                    img.src = src;
-                    img.loading = "lazy";
+                    img.className = 'album-item'; img.src = src; img.loading = "lazy";
                     img.onclick = () => openViewer(src);
                     grid.appendChild(img);
                 });
@@ -217,10 +219,7 @@
         display.appendChild(grid.children.length ? grid : Object.assign(document.createElement('p'), {innerText: '暂无照片', style: 'text-align:center;color:#888;'}));
     }
 
-    function openViewer(src) {
-        viewerImg.src = src;
-        viewer.style.display = 'flex';
-    }
+    function openViewer(src) { viewerImg.src = src; viewer.style.display = 'flex'; }
 </script>
 </body>
 </html>
