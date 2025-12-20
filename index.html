@@ -9,83 +9,58 @@
         :root { --width: 1000px; --text-color: #444; --link-color: #3273dc; --accent-color: #576b95; }
         body { font-family: sans-serif; margin: auto; padding: 20px; max-width: var(--width); background-image: url("https://pic1.imgdb.cn/item/6946acea29a616e528622615.jpg"); background-attachment: fixed; background-size: cover; color: var(--text-color); line-height: 1.6; }
         
-        /* 导航 */
         header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
         nav { display: flex; gap: 10px; }
         nav a { text-decoration: none; color: var(--text-color); font-weight: bold; cursor: pointer; padding: 6px 12px; border-radius: 6px; transition: 0.3s; }
         nav a.active { color: white; background: var(--link-color); }
 
-        /* 主容器布局 */
         .container { display: flex; gap: 25px; align-items: flex-start; }
+        .main-content { flex: 1; min-width: 0; background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(10px); padding: 25px; border-radius: 16px; min-height: 500px; overflow: hidden; }
         
-        /* 左侧主内容区 - 修复溢出的核心 */
-        .main-content { 
-            flex: 1; 
-            min-width: 0; /* 关键：防止 flex 子元素溢出 */
-            background: rgba(255, 255, 255, 0.4); 
-            backdrop-filter: blur(10px); 
-            padding: 25px; 
-            border-radius: 16px; 
-            min-height: 500px; 
-            overflow: hidden; /* 确保内容不超出圆角边框 */
-        }
-        
-        /* 侧边栏样式 */
         .sidebar { width: 280px; position: sticky; top: 20px; display: flex; flex-direction: column; gap: 20px; flex-shrink: 0; }
         .side-card { background: rgba(255, 255, 255, 0.5); backdrop-filter: blur(10px); padding: 20px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.3); }
         .side-title { font-size: 0.9rem; font-weight: bold; color: var(--accent-color); margin-bottom: 15px; border-left: 4px solid var(--accent-color); padding-left: 8px; }
 
-        /* 统计数据 */
         .stat-list { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .stat-num { font-size: 1.2rem; font-weight: bold; color: #333; display: block; }
         .stat-label { font-size: 0.7rem; color: #777; }
 
-        /* 词云 */
         #wordcloud-container { width: 100%; height: 200px; display: flex; align-items: center; justify-content: center; }
         .no-data-hint { font-size: 0.8rem; color: #888; text-align: center; }
 
-        /* 年份筛选 */
         .year-bar { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
         .filter-btn { cursor: pointer; border: none; background: rgba(255,255,255,0.4); padding: 4px 12px; border-radius: 15px; font-size: 0.8rem; }
         .filter-btn.active { background: var(--accent-color); color: white; }
 
-        /* 动态内容卡片 */
+        /* 动态内容 */
         .moment-card { padding: 20px 0; border-bottom: 1px solid rgba(0, 0, 0, 0.05); display: flex; gap: 12px; }
         .item-avatar { width: 42px; height: 42px; border-radius: 6px; object-fit: cover; flex-shrink: 0; }
         .moment-text { font-size: 0.95rem; white-space: pre-wrap; margin: 8px 0; }
         .moment-text.collapsed { max-height: 8em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; }
         .expand-btn { color: var(--accent-color); cursor: pointer; font-size: 0.85rem; font-weight: bold; margin-bottom: 10px; display: inline-block; }
         
-        /* 动态里的九宫格 */
+        /* 媒体组件 */
         .moment-gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; max-width: 400px; margin-top: 10px; }
         .moment-gallery img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 4px; cursor: pointer; }
+        .moment-video { width: 100%; max-width: 450px; border-radius: 8px; margin-top: 10px; background: #000; }
+        
+        .music-share-card { display: flex; align-items: center; background: rgba(255, 255, 255, 0.3); border: 1px solid rgba(0, 0, 0, 0.05); padding: 10px; border-radius: 8px; max-width: 320px; cursor: pointer; transition: 0.2s; text-decoration: none; color: inherit; margin-top: 10px; }
+        .music-share-card:hover { background: rgba(255, 255, 255, 0.5); }
+        .music-cover { width: 50px; height: 50px; border-radius: 6px; object-fit: cover; margin-right: 12px; flex-shrink: 0; }
+        .music-title { font-size: 0.9rem; font-weight: bold; color: #333; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .music-artist { font-size: 0.75rem; color: #777; }
 
-        /* 🖼️ 纯相册模式网格 - 修复重点 */
-        .album-grid { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); 
-            gap: 15px; 
-            width: 100%;
-        }
-        .album-item { 
-            width: 100%; 
-            aspect-ratio: 1; 
-            object-fit: cover; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            transition: transform 0.2s, box-shadow 0.2s; 
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-        .album-item:hover { transform: scale(1.03); box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        /* 相册网格 */
+        .album-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; width: 100%; }
+        .album-item { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; cursor: pointer; transition: 0.2s; border: 1px solid rgba(255,255,255,0.2); }
+        .album-item:hover { transform: scale(1.03); }
 
-        /* 图片查看器 */
         #image-viewer { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 9999; justify-content: center; align-items: center; }
         #viewer-img { max-width: 90%; max-height: 90%; border-radius: 4px; }
 
         @media (max-width: 850px) {
             .container { flex-direction: column; }
             .sidebar { width: 100%; position: static; }
-            .album-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
         }
     </style>
 </head>
@@ -104,7 +79,7 @@
         <div class="year-bar" id="yearFilter">
             <button class="filter-btn active" onclick="setYear('all', this)">全部</button>
         </div>
-        <div id="contentDisplay">正在同步数据...</div>
+        <div id="contentDisplay">数据载入中...</div>
     </main>
 
     <aside class="sidebar">
@@ -117,7 +92,6 @@
                 <div class="stat-item"><span id="s-music" class="stat-num">0</span><span class="stat-label">分享音乐</span></div>
             </div>
         </div>
-
         <div class="side-card">
             <div class="side-title">高频词云</div>
             <div id="wordcloud-container">
@@ -127,7 +101,7 @@
     </aside>
 </div>
 
-<div id="image-viewer" onclick="this.style.display='none'"><img id="viewer-img" src=""></div>
+<div id="image-viewer" onclick="this.style.display='none'"><img id="viewer-img"></div>
 
 <script>
     const GITHUB_USER = "nightola", GITHUB_REPO = "blog-moments", GITHUB_BRANCH = "main";
@@ -136,12 +110,10 @@
     const getCDNUrl = url => (!url || url.startsWith('http')) ? url : `https://cdn.jsdelivr.net/gh/${GITHUB_USER}/${GITHUB_REPO}@${GITHUB_BRANCH}/${url}`;
 
     async function init() {
-        try {
-            const res = await fetch('data.json');
-            globalData = await res.json();
-            renderYearBtns();
-            render();
-        } catch (e) { document.getElementById('contentDisplay').innerText = "数据同步异常，请检查 JSON 格式"; }
+        const res = await fetch('data.json');
+        globalData = await res.json();
+        renderYearBtns();
+        render();
     }
 
     function renderYearBtns() {
@@ -192,59 +164,58 @@
             if (item.music) music++;
             textAgg += (item.text || "") + " ";
         });
-
         document.getElementById('s-count').innerText = data.length;
         document.getElementById('s-words').innerText = words;
         document.getElementById('s-imgs').innerText = imgs;
         document.getElementById('s-music').innerText = music;
-
         setTimeout(() => drawCloud(textAgg), 200);
     }
 
     function drawCloud(text) {
         const container = document.getElementById('wordcloud-container');
         const words = text.replace(/[^\u4e00-\u9fa5a-zA-Z]/g, " ").split(/\s+/).filter(w => w.length >= 1);
-        
         if (words.length < 10) {
             container.innerHTML = '<div class="no-data-hint">积攒更多动态文字<br>以生成个人词云</div>';
             return;
         }
-        
         container.innerHTML = '<canvas id="wordcloud-canvas"></canvas>';
         const canvas = document.getElementById('wordcloud-canvas');
-        canvas.width = container.offsetWidth;
-        canvas.height = 200;
-
+        canvas.width = container.offsetWidth; canvas.height = 200;
         const freqMap = {};
         words.forEach(w => freqMap[w] = (freqMap[w] || 0) + 1);
         const list = Object.entries(freqMap).sort((a,b) => b[1]-a[1]).slice(0, 30);
-
-        WordCloud(canvas, { 
-            list, 
-            gridSize: 8, 
-            weightFactor: size => Math.pow(size, 1.1) * (canvas.width / 150),
-            color: 'random-dark',
-            backgroundColor: 'transparent',
-            rotateRatio: 0.2
-        });
+        WordCloud(canvas, { list, gridSize: 8, weightFactor: size => Math.pow(size, 1.1) * (canvas.width / 150), color: 'random-dark', backgroundColor: 'transparent', rotateRatio: 0 });
     }
 
     function renderMoments(data, container) {
         data.forEach((item, idx) => {
             const card = document.createElement('div');
             card.className = 'moment-card';
-            let media = '';
-            if (item.imgs) {
-                media = `<div class="moment-gallery">` + 
+            
+            // 媒体渲染逻辑（修复点：支持图片、视频、音乐）
+            let mediaHtml = '';
+            if (item.video) {
+                mediaHtml = `<video class="moment-video" controls src="${getCDNUrl(item.video)}" preload="metadata"></video>`;
+            } else if (item.music) {
+                const cover = item.music.cover ? getCDNUrl(item.music.cover) : 'https://pic1.imgdb.cn/item/6946acea29a616e528622615.jpg';
+                mediaHtml = `<a href="${item.music.url}" target="_blank" class="music-share-card">
+                        <img src="${cover}" class="music-cover">
+                        <div style="min-width:0">
+                            <div class="music-title">${item.music.title}</div>
+                            <div class="music-artist">${item.music.artist}</div>
+                        </div></a>`;
+            } else if (item.imgs && item.imgs.length > 0) {
+                mediaHtml = `<div class="moment-gallery">` + 
                     item.imgs.map(img => `<img src="${getCDNUrl(img)}" onclick="view('${getCDNUrl(img)}')">`).join('') + `</div>`;
             }
+
             card.innerHTML = `
                 <img src="${getCDNUrl('images/avatar.jpg')}" class="item-avatar">
                 <div style="flex:1; min-width:0;">
                     <div style="color:var(--accent-color); font-weight:bold;">亚离解星</div>
                     <div id="t-${idx}" class="moment-text collapsed">${item.text}</div>
                     <div id="b-${idx}" class="expand-btn" style="display:none" onclick="toggle(${idx})">全文</div>
-                    ${media}
+                    ${mediaHtml}
                     <div style="font-size:0.75rem; color:#bbb; margin-top:10px;">${item.date}</div>
                 </div>`;
             container.appendChild(card);
@@ -260,9 +231,7 @@
         data.forEach(item => {
             if (item.imgs) item.imgs.forEach(img => {
                 const el = document.createElement('img');
-                el.className = 'album-item'; 
-                el.src = getCDNUrl(img);
-                el.loading = "lazy";
+                el.className = 'album-item'; el.src = getCDNUrl(img);
                 el.onclick = () => view(getCDNUrl(img));
                 grid.appendChild(el);
             });
@@ -276,12 +245,7 @@
         b.innerText = isCol ? '全文' : '收起';
     }
 
-    function view(s) { 
-        const v = document.getElementById('image-viewer'); 
-        const img = document.getElementById('viewer-img');
-        img.src = s; 
-        v.style.display = 'flex'; 
-    }
+    function view(s) { const v = document.getElementById('image-viewer'); v.querySelector('img').src = s; v.style.display = 'flex'; }
 
     init();
 </script>
