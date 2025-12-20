@@ -3,93 +3,116 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nightola-227 FM | 集成动态、相册与统计</title>
+    <title>Nightola-227 FM | 动态看板</title>
     <script src="https://cdn.jsdelivr.net/npm/wordcloud@1.2.2/src/wordcloud2.min.js"></script>
     <style>
-        :root { --width: 720px; --text-color: #444; --link-color: #3273dc; }
-        body { font-family: sans-serif; margin: auto; padding: 20px; max-width: var(--width); background-image: url("https://pic1.imgdb.cn/item/6946acea29a616e528622615.jpg"); background-attachment: fixed; background-size: cover; }
-        main { background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(10px); padding: 25px; border-radius: 16px; min-height: 400px; }
+        :root { --width: 1000px; --text-color: #444; --link-color: #3273dc; --accent-color: #576b95; }
+        body { font-family: sans-serif; margin: auto; padding: 20px; max-width: var(--width); background-image: url("https://pic1.imgdb.cn/item/6946acea29a616e528622615.jpg"); background-attachment: fixed; background-size: cover; color: var(--text-color); }
         
-        /* 导航与筛选 */
-        nav { margin-bottom: 20px; display: flex; gap: 10px; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 10px; }
-        nav a { text-decoration: none; color: var(--text-color); font-weight: bold; cursor: pointer; padding: 6px 12px; border-radius: 6px; transition: 0.2s; }
+        /* 导航 */
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
+        nav { display: flex; gap: 10px; }
+        nav a { text-decoration: none; color: var(--text-color); font-weight: bold; cursor: pointer; padding: 6px 12px; border-radius: 6px; }
         nav a.active { color: white; background: var(--link-color); }
 
-        .year-filter-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
-        .filter-btn { cursor: pointer; border: 1px solid rgba(0,0,0,0.1); background: rgba(255,255,255,0.3); padding: 4px 12px; border-radius: 15px; font-size: 0.8rem; transition: 0.2s; }
-        .filter-btn.active { background: #576b95; color: white; border-color: #576b95; }
+        /* 主容器布局 */
+        .container { display: flex; gap: 25px; align-items: flex-start; }
+        .main-content { flex: 1; background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(10px); padding: 25px; border-radius: 16px; min-height: 500px; }
+        
+        /* 侧边栏样式 */
+        .sidebar { width: 280px; position: sticky; top: 20px; display: flex; flex-direction: column; gap: 20px; }
+        .side-card { background: rgba(255, 255, 255, 0.5); backdrop-filter: blur(10px); padding: 20px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.3); }
+        .side-title { font-size: 0.9rem; font-weight: bold; color: var(--accent-color); margin-bottom: 15px; border-left: 4px solid var(--accent-color); padding-left: 8px; }
 
-        /* 统计仪表盘 */
-        #stats-dashboard { background: rgba(255,255,255,0.25); border-radius: 12px; padding: 15px; margin-bottom: 20px; display: none; }
-        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; text-align: center; }
-        .stat-item .num { font-size: 1.3rem; font-weight: bold; color: #576b95; display: block; }
-        .stat-item .label { font-size: 0.7rem; color: #666; text-transform: uppercase; }
-        #wordcloud-container { width: 100%; height: 180px; margin-top: 15px; border-radius: 8px; }
+        /* 统计数据 */
+        .stat-list { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .stat-item { display: flex; flex-direction: column; }
+        .stat-num { font-size: 1.2rem; font-weight: bold; color: #333; }
+        .stat-label { font-size: 0.7rem; color: #777; }
 
-        /* 内容区样式 */
+        /* 词云 */
+        #wordcloud-container { width: 100%; height: 200px; display: flex; align-items: center; justify-content: center; }
+        .no-data-hint { font-size: 0.8rem; color: #888; text-align: center; }
+
+        /* 动态内容 */
+        .year-bar { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+        .filter-btn { cursor: pointer; border: none; background: rgba(255,255,255,0.4); padding: 4px 12px; border-radius: 15px; font-size: 0.8rem; }
+        .filter-btn.active { background: var(--accent-color); color: white; }
+
         .moment-card { padding: 20px 0; border-bottom: 1px solid rgba(0, 0, 0, 0.05); display: flex; gap: 12px; }
         .item-avatar { width: 42px; height: 42px; border-radius: 6px; object-fit: cover; }
-        .moment-body { flex-grow: 1; display: flex; flex-direction: column; gap: 8px; }
-        .moment-author { font-weight: 700; color: #576b95; }
-        .moment-text { font-size: 0.95rem; line-height: 1.5; white-space: pre-wrap; word-break: break-all; }
-        .moment-text.collapsed { max-height: 7.5em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; }
-        .expand-btn { color: #576b95; cursor: pointer; font-size: 0.85rem; font-weight: bold; }
+        .moment-text { font-size: 0.95rem; line-height: 1.6; white-space: pre-wrap; margin: 8px 0; }
+        .moment-text.collapsed { max-height: 8em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; }
+        .expand-btn { color: var(--accent-color); cursor: pointer; font-size: 0.85rem; font-weight: bold; }
         
-        .album-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
-        .album-item { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; cursor: pointer; transition: 0.2s; }
-        .album-item:hover { transform: scale(1.05); }
+        .moment-gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; max-width: 400px; margin-top: 10px; }
+        .moment-gallery img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 4px; cursor: pointer; }
+        .album-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; }
 
-        .moment-gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; max-width: 400px; }
-        .moment-gallery img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 4px; }
-        
-        #image-viewer { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 999; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+        /* 图片查看器 */
+        #image-viewer { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 9999; justify-content: center; align-items: center; }
         #viewer-img { max-width: 90%; max-height: 90%; }
+
+        @media (max-width: 850px) {
+            .container { flex-direction: column; }
+            .sidebar { width: 100%; position: static; }
+            header { flex-direction: column; align-items: flex-start; }
+        }
     </style>
 </head>
 <body>
 
 <header>
-    <h1 style="font-size: 1.5rem;">･✦ Nightola-227 FM ✦･</h1>
+    <h1>･✦ Nightola-227 FM ✦･</h1>
     <nav id="modeNav">
         <a id="nav-moments" class="active" onclick="setMode('moments')">动态流</a>
-        <a id="nav-album" onclick="setMode('album')">相册集</a>
-        <a id="nav-stats" onclick="setMode('stats')">年度统计</a>
+        <a id="nav-album" onclick="setMode('album')">纯相册</a>
     </nav>
-    <div class="year-filter-bar" id="yearFilter">
-        <button class="filter-btn active" onclick="setYear('all', this)">全部年份</button>
-    </div>
 </header>
 
-<main>
-    <div id="stats-dashboard">
-        <div class="stats-grid">
-            <div class="stat-item"><span id="stat-count" class="num">0</span><span class="label">动态</span></div>
-            <div class="stat-item"><span id="stat-imgs" class="num">0</span><span class="label">图片</span></div>
-            <div class="stat-item"><span id="stat-words" class="num">0</span><span class="label">字数</span></div>
+<div class="container">
+    <main class="main-content">
+        <div class="year-bar" id="yearFilter">
+            <button class="filter-btn active" onclick="setYear('all', this)">全部</button>
         </div>
-        <div id="wordcloud-container">
-            <canvas id="wordcloud-canvas"></canvas>
+        <div id="contentDisplay">加载数据中...</div>
+    </main>
+
+    <aside class="sidebar">
+        <div class="side-card">
+            <div class="side-title">年度数据</div>
+            <div class="stat-list">
+                <div class="stat-item"><span id="s-count" class="stat-num">0</span><span class="stat-label">动态条数</span></div>
+                <div class="stat-item"><span id="s-words" class="stat-num">0</span><span class="stat-label">累计字数</span></div>
+                <div class="stat-item"><span id="s-imgs" class="stat-num">0</span><span class="stat-label">相册图片</span></div>
+                <div class="stat-item"><span id="s-music" class="stat-num">0</span><span class="stat-label">分享音乐</span></div>
+            </div>
         </div>
-    </div>
 
-    <div id="contentDisplay">
-        <p style="text-align: center; color: #888;">数据同步中...</p>
-    </div>
-</main>
+        <div class="side-card">
+            <div class="side-title">高频词汇</div>
+            <div id="wordcloud-container">
+                <canvas id="wordcloud-canvas"></canvas>
+            </div>
+        </div>
+    </aside>
+</div>
 
-<div id="image-viewer" onclick="this.style.display='none'"><img id="viewer-img"></div>
+<div id="image-viewer" onclick="this.style.display='none'"><img id="viewer-img" src=""></div>
 
 <script>
-    const GITHUB_CONF = { user: "nightola", repo: "blog-moments", branch: "main" };
+    const GITHUB_USER = "nightola", GITHUB_REPO = "blog-moments", GITHUB_BRANCH = "main";
     let globalData = [], currentMode = 'moments', currentYear = 'all';
 
-    const getCDNUrl = url => (!url || url.startsWith('http')) ? url : `https://cdn.jsdelivr.net/gh/${GITHUB_CONF.user}/${GITHUB_CONF.repo}@${GITHUB_CONF.branch}/${url}`;
+    const getCDNUrl = url => (!url || url.startsWith('http')) ? url : `https://cdn.jsdelivr.net/gh/${GITHUB_USER}/${GITHUB_REPO}@${GITHUB_BRANCH}/${url}`;
 
     async function init() {
-        const res = await fetch('data.json');
-        globalData = await res.json();
-        renderYearBtns();
-        render();
+        try {
+            const res = await fetch('data.json');
+            globalData = await res.json();
+            renderYearBtns();
+            render();
+        } catch (e) { document.getElementById('contentDisplay').innerText = "数据加载失败"; }
     }
 
     function renderYearBtns() {
@@ -120,87 +143,89 @@
 
     function render() {
         const display = document.getElementById('contentDisplay');
-        const dashboard = document.getElementById('stats-dashboard');
         display.innerHTML = '';
-        
         const filtered = currentYear === 'all' ? globalData : globalData.filter(d => d.year === currentYear);
 
-        // 无论在什么模式下，只要切换了年份，后台都会静默更新统计数据
-        updateStatsData(filtered);
+        updateSidebar(filtered);
 
-        if (currentMode === 'stats') {
-            dashboard.style.display = 'block';
-            display.innerHTML = '<p style="text-align:center; color:#888; margin-top:40px;">（统计数据基于上述筛选条件实时生成）</p>';
+        if (currentMode === 'moments') {
+            renderMoments(filtered, display);
         } else {
-            dashboard.style.display = 'none';
-            if (currentMode === 'moments') renderMoments(filtered, display);
-            else renderAlbum(filtered, display);
+            renderAlbum(filtered, display);
         }
     }
 
-    function updateStatsData(data) {
-        let words = 0, imgs = 0, textAgg = "";
+    function updateSidebar(data) {
+        let words = 0, imgs = 0, music = 0, textAgg = "";
         data.forEach(item => {
             words += (item.text || "").length;
             imgs += (item.imgs ? item.imgs.length : 0);
+            if (item.music) music++;
             textAgg += (item.text || "") + " ";
         });
-        document.getElementById('stat-count').innerText = data.length;
-        document.getElementById('stat-imgs').innerText = imgs;
-        document.getElementById('stat-words').innerText = words;
-        
-        if (currentMode === 'stats') {
-            setTimeout(() => drawCloud(textAgg), 100);
-        }
+
+        document.getElementById('s-count').innerText = data.length;
+        document.getElementById('s-words').innerText = words;
+        document.getElementById('s-imgs').innerText = imgs;
+        document.getElementById('s-music').innerText = music;
+
+        // 尝试绘制词云
+        setTimeout(() => drawCloud(textAgg), 200);
     }
 
     function drawCloud(text) {
         const canvas = document.getElementById('wordcloud-canvas');
         const container = document.getElementById('wordcloud-container');
-        canvas.width = container.offsetWidth;
-        canvas.height = container.offsetHeight;
         
-        const freqMap = {};
-        text.replace(/[^\u4e00-\u9fa5a-zA-Z]/g, " ").split(/\s+/).forEach(w => {
-            if (w.length >= 1) freqMap[w] = (freqMap[w] || 0) + 1;
-        });
+        // 简单分词
+        const words = text.replace(/[^\u4e00-\u9fa5a-zA-Z]/g, " ").split(/\s+/).filter(w => w.length >= 1);
+        
+        if (words.length < 10) {
+            container.innerHTML = '<div class="no-data-hint">积攒更多动态<br>以生成词云</div>';
+            return;
+        }
+        
+        container.innerHTML = '<canvas id="wordcloud-canvas"></canvas>';
+        const newCanvas = document.getElementById('wordcloud-canvas');
+        newCanvas.width = container.offsetWidth;
+        newCanvas.height = container.offsetHeight;
 
-        const list = Object.entries(freqMap).sort((a,b) => b[1]-a[1]).slice(0, 40);
-        WordCloud(canvas, { 
+        const freqMap = {};
+        words.forEach(w => freqMap[w] = (freqMap[w] || 0) + 1);
+        const list = Object.entries(freqMap).sort((a,b) => b[1]-a[1]).slice(0, 30);
+
+        WordCloud(newCanvas, { 
             list, 
-            gridSize: 10, 
-            weightFactor: size => Math.pow(size, 1.1) * (canvas.width / 150),
-            rotateRatio: 0, 
+            gridSize: 8, 
+            weightFactor: size => Math.pow(size, 1.1) * (newCanvas.width / 120),
             color: 'random-dark',
             backgroundColor: 'transparent',
-            minSize: 10
+            rotateRatio: 0
         });
     }
 
     function renderMoments(data, container) {
         data.forEach((item, idx) => {
-            let media = '';
-            if (item.imgs) {
-                media = `<div class="moment-gallery ${item.imgs.length===1?'single':''}">` + 
-                        item.imgs.map(img => `<img src="${getCDNUrl(img)}" onclick="view('${getCDNUrl(img)}')">`).join('') + `</div>`;
-            }
             const card = document.createElement('div');
             card.className = 'moment-card';
+            let media = '';
+            if (item.imgs) {
+                media = `<div class="moment-gallery">` + 
+                    item.imgs.map(img => `<img src="${getCDNUrl(img)}" onclick="view('${getCDNUrl(img)}')">`).join('') + `</div>`;
+            }
             card.innerHTML = `
                 <img src="${getCDNUrl('images/avatar.jpg')}" class="item-avatar">
-                <div class="moment-body">
-                    <div class="moment-author">亚离解星</div>
+                <div style="flex:1">
+                    <div style="color:var(--accent-color); font-weight:bold;">亚离解星</div>
                     <div id="t-${idx}" class="moment-text collapsed">${item.text}</div>
                     <div id="b-${idx}" class="expand-btn" style="display:none" onclick="toggle(${idx})">全文</div>
                     ${media}
-                    <div style="font-size:0.7rem; color:#999">${item.date}</div>
+                    <div style="font-size:0.75rem; color:#bbb; margin-top:10px;">${item.date}</div>
                 </div>`;
             container.appendChild(card);
             
-            const textElem = document.getElementById(`t-${idx}`);
-            if (textElem.scrollHeight > textElem.offsetHeight) {
-                document.getElementById(`b-${idx}`).style.display = 'block';
-            }
+            const t = document.getElementById(`t-${idx}`);
+            if (t.scrollHeight > t.offsetHeight) document.getElementById(`b-${idx}`).style.display = 'block';
         });
     }
 
