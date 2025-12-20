@@ -1,6 +1,5 @@
 /**
- * Nightola-227 FM 核心逻辑脚本
- * 策略：MD文件直接读取（无延迟），媒体文件走CDN（加速）
+ * Nightola-227 FM 核心逻辑脚本 - 最终修复版
  */
 
 // 1. 配置信息
@@ -8,42 +7,67 @@ const GITHUB_USER = "nightola";
 const GITHUB_REPO = "blog-moments";
 const GITHUB_BRANCH = "main";
 
-// 2. 全局状态
+// 2. 状态变量
 let rawData = { moments: [], posts: [] }; 
 let currentMode = 'moments', currentYear = 'all', searchQuery = '';
 
-// 3. CDN 工具（用于图片、视频、音乐封面）
+// 3. 路径工具：媒体走CDN，MD走原始路径
 const getCDNUrl = url => (!url || url.startsWith('http')) ? url : `https://cdn.jsdelivr.net/gh/${GITHUB_USER}/${GITHUB_REPO}@${GITHUB_BRANCH}/${url}`;
+// 获取 GitHub Pages 的原始绝对路径
+const getRawUrl = path => `https://${GITHUB_USER}.github.io/${GITHUB_REPO}/${path}`;
 
-/**
- * 初始化
- */
 async function init() {
     try {
-        // 直接读取根目录下的 data.json
-        const res = await fetch('data.json?v=' + Date.now()); // 加个时间戳防止JSON被浏览器缓存
+        // 读取 JSON，加上随机数防止被浏览器强行缓存旧数据
+        const res = await fetch('data.json?t=' + Date.now());
         rawData = await res.json();
-        
-        // 兼容旧格式
-        if (Array.isArray(rawData)) {
-            rawData = { moments: rawData, posts: [] };
-        }
-        
+        if (Array.isArray(rawData)) rawData = { moments: rawData, posts: [] };
         renderYearBtns();
         render();
     } catch (e) {
-        console.error("初始化失败:", e);
+        console.error("加载数据失败:", e);
     }
 }
 
 /**
- * 核心渲染分发
+ * 核心：读取并渲染 Markdown
  */
+async function loadMarkdown(path) {
+    const display = document.getElementById('contentDisplay');
+    display.innerHTML = '<div style="text-align:center;padding:50px;">正在获取文章内容...</div>';
+    
+    // 强制使用绝对路径访问 GitHub Pages 上的文件
+    const targetUrl = getRawUrl(path);
+
+    try {
+        const res = await fetch(targetUrl, { cache: "no-cache" }); 
+        if (!res.ok) throw new Error(`服务器响应异常: ${res.status}`);
+        const md = await res.text();
+        
+        display.innerHTML = `
+            <div class="markdown-body" style="text-align:left; animation: fadeIn 0.4s ease-out;">
+                ${marked.parse(md)}
+                <hr style="margin:30px 0; opacity:0.1;">
+                <button onclick="setMode('posts')" style="cursor:pointer; padding:8px 20px; border-radius:20px; border:none; background:var(--accent-color); color:white; font-weight:bold;">← 返回列表</button>
+            </div>`;
+        window.scrollTo(0, 0);
+    } catch (e) {
+        display.innerHTML = `
+            <div style="text-align:center; padding:50px; color:#cc0000;">
+                <h3>抓取文章失败</h3>
+                <p>尝试地址：<a href="${targetUrl}" target="_blank">${targetUrl}</a></p>
+                <p>错误详情：${e.message}</p>
+                <small>既然手动能打开，请尝试按下 <b>Ctrl + F5</b> 强制刷新网页缓存。</small>
+            </div>`;
+    }
+}
+
+// ==================== 渲染逻辑 ====================
+
 function render() {
     const display = document.getElementById('contentDisplay');
     display.innerHTML = '';
 
-    // 过滤动态
     const filteredMoments = (rawData.moments || []).filter(item => {
         const matchesYear = (currentYear === 'all' || item.year === currentYear);
         const matchesSearch = (item.text || "").toLowerCase().includes(searchQuery.toLowerCase());
@@ -61,56 +85,23 @@ function render() {
     }
 }
 
-// ==================== 文章模式 (直接从仓库读取) ====================
-
 function renderPostList(posts, container) {
-    const filteredPosts = posts.filter(p => p.title.toLowerCase().includes(searchQuery.toLowerCase()));
-    
-    if (filteredPosts.length === 0) {
-        container.innerHTML = '<p style="text-align:center;color:#888;margin-top:50px;">未找到匹配的文章</p>';
+    const filtered = posts.filter(p => p.title.toLowerCase().includes(searchQuery.toLowerCase()));
+    if (filtered.length === 0) {
+        container.innerHTML = '<p style="text-align:center;color:#888;padding-top:50px;">未找到匹配文章</p>';
         return;
     }
-
-    filteredPosts.forEach(post => {
+    filtered.forEach(post => {
         const div = document.createElement('div');
         div.className = 'post-item';
-        div.style = "background:rgba(255,255,255,0.3); padding:20px; border-radius:12px; margin-bottom:15px; cursor:pointer; border:1px solid rgba(255,255,255,0.2);";
-        div.innerHTML = `
-            <div style="font-weight:bold; color:var(--accent-color); font-size:1.1rem; margin-bottom:5px;">${post.title}</div>
-            <div style="font-size:0.8rem; color:#888;">${post.date}</div>
-        `;
+        div.style = "background:rgba(255,255,255,0.3); padding:20px; border-radius:12px; margin-bottom:15px; cursor:pointer; border:1px solid rgba(255,255,255,0.2); transition: 0.3s;";
+        div.innerHTML = `<div style="font-weight:bold; color:var(--accent-color); font-size:1.1rem; margin-bottom:5px;">${post.title}</div><div style="font-size:0.8rem; color:#888;">${post.date}</div>`;
+        div.onmouseover = () => div.style.backgroundColor = "rgba(255,255,255,0.6)";
+        div.onmouseout = () => div.style.backgroundColor = "rgba(255,255,255,0.3)";
         div.onclick = () => loadMarkdown(post.file);
         container.appendChild(div);
     });
 }
-
-async function loadMarkdown(path) {
-    const display = document.getElementById('contentDisplay');
-    display.innerHTML = '<div style="text-align:center;padding:50px;">正在从仓库抓取文章...</div>';
-    
-    try {
-        // 直接访问相对路径，不经过 CDN
-        const res = await fetch(path + '?v=' + Date.now()); 
-        if (!res.ok) throw new Error('文件未找到');
-        const md = await res.text();
-        
-        display.innerHTML = `
-            <div class="markdown-body" style="text-align:left; animation: fadeIn 0.5s;">
-                ${marked.parse(md)}
-                <hr style="margin:30px 0; opacity:0.1;">
-                <button onclick="setMode('posts')" style="cursor:pointer; padding:8px 20px; border-radius:20px; border:none; background:var(--accent-color); color:white;">← 返回列表</button>
-            </div>`;
-        window.scrollTo(0, 0);
-    } catch (e) {
-        display.innerHTML = `<div style="text-align:center; padding:50px; color:#cc0000;">
-            <h3>读取文章失败</h3>
-            <p>路径：${path}</p>
-            <small>请确认 GitHub 仓库中存在该文件且路径大小写一致。</small>
-        </div>`;
-    }
-}
-
-// ==================== 动态与相册 (媒体继续用 CDN) ====================
 
 function renderMoments(data, container) {
     data.forEach((item, idx) => {
@@ -123,12 +114,9 @@ function renderMoments(data, container) {
             const cover = item.music.cover ? getCDNUrl(item.music.cover) : '';
             mediaHtml = `<a href="${item.music.url}" target="_blank" class="music-share-card">
                         <img src="${cover}" class="music-cover">
-                        <div style="min-width:0">
-                            <div class="music-title">${item.music.title}</div>
-                            <div class="music-artist">${item.music.artist}</div>
-                        </div></a>`;
+                        <div><div class="music-title">${item.music.title}</div><div class="music-artist">${item.music.artist}</div></div></a>`;
         } else if (item.imgs && item.imgs.length > 0) {
-            mediaHtml = `<div class="moment-gallery">` + item.imgs.map(img => `<img src="${getCDNUrl(img)}" onclick="view('${getCDNUrl(img)}')">`).join('') + `</div>`;
+            mediaHtml = `<div class="moment-gallery">${item.imgs.map(img => `<img src="${getCDNUrl(img)}" onclick="view('${getCDNUrl(img)}')">`).join('')}</div>`;
         }
         card.innerHTML = `<img src="${getCDNUrl('images/avatar.jpg')}" class="item-avatar">
             <div style="flex:1; min-width:0;">
@@ -150,16 +138,14 @@ function renderAlbum(data, container) {
     data.forEach(item => {
         if (item.imgs) item.imgs.forEach(img => {
             const el = document.createElement('img');
-            el.className = 'album-item'; 
-            el.src = getCDNUrl(img); // 相册走 CDN
-            el.onclick = () => view(getCDNUrl(img));
+            el.className = 'album-item'; el.src = getCDNUrl(img); el.onclick = () => view(getCDNUrl(img));
             grid.appendChild(el);
         });
     });
     container.appendChild(grid);
 }
 
-// ==================== 工具函数 (保持原样) ====================
+// ==================== 工具函数 ====================
 
 function renderYearBtns() {
     if (!rawData.moments) return;
