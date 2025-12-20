@@ -36,13 +36,30 @@ body {
     height: fit-content;
 }
 
+.profile-section {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.side-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    margin-bottom: 10px;
+    border: 3px solid white;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.side-name { font-size: 1.2rem; margin: 0; font-weight: 800; }
+.side-bio { font-size: 0.85rem; color: var(--text-sub); margin: 5px 0 0; }
+
 /* 主内容区样式 */
 .main-content {
     flex-grow: 1;
     min-width: 0;
 }
 
-/* 3. 导航与过滤器 */
+/* 3. 导航与统计 */
 .nav-menu {
     display: flex;
     flex-direction: column;
@@ -63,6 +80,30 @@ body {
     background: var(--card-bg);
     color: var(--accent-color);
     box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+}
+
+.stats-box {
+    background: var(--card-bg);
+    padding: 15px;
+    border-radius: 18px;
+    margin-bottom: 25px;
+}
+
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    margin-bottom: 5px;
+}
+
+.stat-item b { color: var(--accent-color); }
+
+.search-container input {
+    width: 100%;
+    padding: 10px 15px;
+    border-radius: 12px;
+    border: 1px solid var(--border-light);
+    outline: none;
 }
 
 .year-filters {
@@ -95,27 +136,33 @@ body {
     padding: 24px;
     margin-bottom: 20px;
     border: 1px solid var(--border-light);
-    box-shadow: 0 2px 10px rgba(0,0,0,0.01);
-}
-
-.item-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 15px;
 }
 
 .item-avatar {
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    object-fit: cover;
+    margin-bottom: 10px;
 }
 
 .moment-text {
     font-size: 15px;
     white-space: pre-wrap;
     word-break: break-word;
+}
+
+.moment-text.collapsed {
+    display: -webkit-box;
+    -webkit-line-clamp: 5;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.expand-btn {
+    color: var(--accent-color);
+    font-size: 13px;
+    cursor: pointer;
+    margin-top: 5px;
 }
 
 /* 5. 媒体与图库 */
@@ -134,22 +181,18 @@ body {
     cursor: pointer;
 }
 
-.music-share-card {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    background: #f9f9f9;
-    padding: 12px;
-    border-radius: 15px;
-    margin-top: 15px;
-    text-decoration: none;
-    color: inherit;
+.album-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
 }
 
-.music-cover {
-    width: 50px;
-    height: 50px;
-    border-radius: 8px;
+.album-item {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    border-radius: 15px;
+    cursor: pointer;
 }
 
 /* 6. 响应式适配 */
@@ -189,7 +232,7 @@ body {
 }
 
 #image-viewer img {
-    max-width: 100%;
-    max-height: 100%;
+    max-width: 90%;
+    max-height: 90%;
     border-radius: 10px;
 }
