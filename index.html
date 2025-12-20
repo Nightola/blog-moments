@@ -20,35 +20,13 @@
         .moment-body { flex-grow: 1; display: flex; flex-direction: column; gap: 8px; overflow: hidden; }
         .moment-author { font-weight: 700; color: #576b95; }
         
-        /* --- ✨ 文字折叠核心 CSS --- */
-        .moment-text { 
-            font-size: 0.95rem; 
-            line-height: 1.5; 
-            color: var(--text-color); 
-            white-space: pre-wrap;
-            word-break: break-all;
-            position: relative;
-        }
-        .moment-text.collapsed {
-            max-height: 7.5em; /* 1.5行高 * 5行 = 7.5em */
-            overflow: hidden;
-            display: -webkit-box;
-            -webkit-line-clamp: 5; /* 限制显示5行 */
-            -webkit-box-orient: vertical;
-        }
-        .expand-btn {
-            color: #576b95;
-            cursor: pointer;
-            font-size: 0.9rem;
-            font-weight: bold;
-            margin-top: 4px;
-            display: none; /* 默认隐藏，由JS控制显示 */
-        }
-        /* --------------------------- */
-
+        /* 文字折叠 CSS */
+        .moment-text { font-size: 0.95rem; line-height: 1.5; color: var(--text-color); white-space: pre-wrap; word-break: break-all; position: relative; }
+        .moment-text.collapsed { max-height: 7.5em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; }
+        .expand-btn { color: #576b95; cursor: pointer; font-size: 0.9rem; font-weight: bold; margin-top: 4px; display: none; }
         .moment-date { font-size: 0.75rem; color: #b2b2b2; }
 
-        /* 🎵 音乐卡片样式 */
+        /* 音乐卡片 */
         .music-share-card { display: flex; align-items: center; background: rgba(0, 0, 0, 0.03); border: 1px solid rgba(0, 0, 0, 0.05); padding: 8px; border-radius: 4px; max-width: 320px; cursor: pointer; transition: background 0.2s; text-decoration: none; color: inherit; }
         .music-share-card:hover { background: rgba(0, 0, 0, 0.06); }
         .music-cover { width: 45px; height: 45px; border-radius: 4px; object-fit: cover; margin-right: 10px; flex-shrink: 0; background: #eee; }
@@ -97,6 +75,20 @@
 </div>
 
 <script>
+    // --- ✨ ✨ 配置加速信息 ✨ ✨ ---
+    // 请填写你的 GitHub 用户名和仓库名
+    const GITHUB_USER = "nightola"; 
+    const GITHUB_REPO = "blog-moments";
+    const GITHUB_BRANCH = "main"; // 你的分支，通常是 main 或 master
+
+    // 自动将相对路径转换为 CDN 加速路径
+    function getCDNUrl(url) {
+        if (!url) return "";
+        // 如果是外部链接(http)，直接返回；如果是本地相对路径(如 images/...)，则进行转换
+        if (url.startsWith('http')) return url;
+        return `https://cdn.jsdelivr.net/gh/${GITHUB_USER}/${GITHUB_REPO}@${GITHUB_BRANCH}/${url}`;
+    }
+
     let globalData = [];
     let currentMode = 'moments'; 
     let currentYear = 'all';
@@ -149,23 +141,28 @@
     function renderMoments(data) {
         data.forEach((item, index) => {
             let mediaHtml = '';
+            
             if (item.video) {
-                mediaHtml = `<video class="moment-video" controls src="${item.video}" preload="metadata"></video>`;
+                mediaHtml = `<video class="moment-video" controls src="${getCDNUrl(item.video)}" preload="metadata"></video>`;
             } else if (item.music) {
-                const coverUrl = item.music.cover || 'https://pic1.imgdb.cn/item/6946acea29a616e528622615.jpg';
+                // 封面如果是相对路径，也进行加速
+                const coverUrl = item.music.cover ? getCDNUrl(item.music.cover) : 'https://pic1.imgdb.cn/item/6946acea29a616e528622615.jpg';
                 mediaHtml = `<a href="${item.music.url}" target="_blank" class="music-share-card">
                         <img src="${coverUrl}" class="music-cover"><div class="music-info">
                         <div class="music-title">${item.music.title}</div><div class="music-artist">${item.music.artist}</div>
                         </div></a>`;
             } else if (item.imgs && item.imgs.length > 0) {
-                const imgList = item.imgs.map(src => `<img src="${src}" onclick="openViewer('${src}')">`).join('');
+                const imgList = item.imgs.map(src => {
+                    const cdnSrc = getCDNUrl(src); // 转换加速链接
+                    return `<img src="${cdnSrc}" onclick="openViewer('${cdnSrc}')">`;
+                }).join('');
                 mediaHtml = `<div class="moment-gallery ${item.imgs.length === 1 ? 'single' : ''}">${imgList}</div>`;
             }
 
             const card = document.createElement('div');
             card.className = 'moment-card';
             card.innerHTML = `
-                <div class="moment-avatar-wrap"><img src="images/avatar.jpg" class="item-avatar"></div>
+                <div class="moment-avatar-wrap"><img src="${getCDNUrl('images/avatar.jpg')}" class="item-avatar"></div>
                 <div class="moment-body">
                     <div class="moment-author">亚离解星</div>
                     <div id="text-${index}" class="moment-text collapsed">${item.text}</div>
@@ -175,22 +172,18 @@
                 </div>`;
             display.appendChild(card);
 
-            //渲染后检查高度
             setTimeout(() => {
                 const textElem = document.getElementById(`text-${index}`);
                 const btnElem = document.getElementById(`btn-${index}`);
-                // 7.5em 是 5 行的高度 (1.5 line-height * 5)
-                // 这里加一点余量判断
-                if (textElem.scrollHeight > textElem.offsetHeight) {
+                if (textElem && textElem.scrollHeight > textElem.offsetHeight) {
                     btnElem.style.display = 'block';
-                } else {
+                } else if (textElem) {
                     textElem.classList.remove('collapsed');
                 }
             }, 0);
         });
     }
 
-    // ✨ 切换展开/收起函数
     function toggleText(index) {
         const textElem = document.getElementById(`text-${index}`);
         const btnElem = document.getElementById(`btn-${index}`);
@@ -209,9 +202,10 @@
         data.forEach(item => {
             if (item.imgs) {
                 item.imgs.forEach(src => {
+                    const cdnSrc = getCDNUrl(src); // 转换加速链接
                     const img = document.createElement('img');
-                    img.className = 'album-item'; img.src = src; img.loading = "lazy";
-                    img.onclick = () => openViewer(src);
+                    img.className = 'album-item'; img.src = cdnSrc; img.loading = "lazy";
+                    img.onclick = () => openViewer(cdnSrc);
                     grid.appendChild(img);
                 });
             }
