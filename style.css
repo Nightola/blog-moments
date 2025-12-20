@@ -106,9 +106,59 @@ nav a.active { color: white; background: var(--link-color); }
 .moment-gallery img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 4px; cursor: pointer; }
 .moment-video { width: 100%; max-width: 450px; border-radius: 8px; margin-top: 10px; background: #000; }
 
-.music-share-card { display: flex; align-items: center; background: rgba(255, 255, 255, 0.3); border: 1px solid rgba(0, 0, 0, 0.05); padding: 10px; border-radius: 8px; max-width: 320px; cursor: pointer; transition: 0.2s; text-decoration: none; color: inherit; margin-top: 10px; }
-.music-share-card:hover { background: rgba(255, 255, 255, 0.5); }
-.music-cover { width: 50px; height: 50px; border-radius: 6px; object-fit: cover; margin-right: 12px; flex-shrink: 0; }
+/* 音乐分享卡片优化 */
+.music-share-card { 
+    display: flex; 
+    align-items: center; 
+    background: rgba(255, 255, 255, 0.5); /* 稍微调亮背景 */
+    border: 1px solid rgba(255, 255, 255, 0.4); 
+    padding: 12px; 
+    border-radius: 12px; 
+    max-width: 340px; 
+    cursor: pointer; 
+    transition: all 0.3s ease; 
+    text-decoration: none; 
+    color: inherit; 
+    margin-top: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05); /* 增加轻微阴影提升质感 */
+}
+
+.music-share-card:hover { 
+    background: rgba(255, 255, 255, 0.8); 
+    transform: translateY(-2px); /* 悬停微动 */
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+}
+
+.music-cover { 
+    width: 56px; 
+    height: 56px; 
+    border-radius: 8px; 
+    object-fit: cover; 
+    margin-right: 15px; 
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* 歌曲标题字体优化 */
+.music-title { 
+    font-size: 1rem; 
+    font-weight: 600; /* 使用半粗体，不突兀 */
+    color: #222; 
+    margin-bottom: 4px;
+    white-space: nowrap; 
+    overflow: hidden; 
+    text-overflow: ellipsis; /* 长歌名自动显示省略号 */
+    letter-spacing: 0.02em; /* 增加微小字间距 */
+}
+
+/* 歌手字体优化 */
+.music-artist { 
+    font-size: 0.8rem; 
+    color: var(--accent-color); /* 使用主题色作为歌手名颜色 */
+    opacity: 0.8;
+    font-weight: normal;
+    letter-spacing: 0.01em;
+}
 
 /* 纯相册网格 */
 .album-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; width: 100%; }
