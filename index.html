@@ -3,48 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>动态 | ･✦ Nightola-227 FM ✦･</title>
+    <title>动态 & 相册 | ･✦ Nightola-227 FM ✦･</title>
     <style>
-        /* 保持你原有的基础 CSS 不变 */
+        /* 保持原有的基础 CSS */
         :root { --width: 720px; --text-color: #444; --link-color: #3273dc; }
         body { font-family: sans-serif; margin: auto; padding: 20px; max-width: var(--width); background-image: url("https://pic1.imgdb.cn/item/6946acea29a616e528622615.jpg"); background-attachment: fixed; background-size: cover; }
         main { background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(10px); padding: 25px; border-radius: 16px; min-height: 400px; }
         nav { margin-bottom: 20px; display: flex; gap: 10px; }
-        nav a { text-decoration: none; color: var(--text-color); font-weight: bold; }
+        nav a { text-decoration: none; color: var(--text-color); font-weight: bold; cursor: pointer; padding: 4px 8px; border-radius: 4px; }
+        nav a.active { color: var(--link-color); background: rgba(50, 115, 220, 0.1); }
 
-        /* 动态卡片基础 */
+        /* 动态模式样式 (原有) */
         .moment-card { padding: 20px 0; border-bottom: 1px solid rgba(0, 0, 0, 0.05); display: flex; gap: 12px; }
         .moment-avatar-wrap { flex-shrink: 0; }
         .item-avatar { width: 42px; height: 42px; border-radius: 6px; object-fit: cover; }
         .moment-body { flex-grow: 1; display: flex; flex-direction: column; gap: 8px; }
         .moment-author { font-weight: 700; color: #576b95; }
         .moment-text { font-size: 0.95rem; line-height: 1.5; color: var(--text-color); white-space: pre-wrap; }
-        .moment-date { font-size: 0.75rem; color: #b2b2b2; }
-
-        /* 🎬 视频样式 */
-        .moment-video { width: 100%; max-width: 450px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.3); }
-
-        /* 🎵 音乐卡片样式 */
-        .music-player { 
-            display: flex; align-items: center; gap: 12px; 
-            background: rgba(255,255,255,0.2); padding: 10px; 
-            border-radius: 8px; max-width: 400px; border: 1px solid rgba(255,255,255,0.2);
-        }
-        .music-info { flex: 1; }
-        .music-title { font-weight: bold; font-size: 0.9rem; margin-bottom: 2px; }
-        .music-artist { font-size: 0.8rem; color: #666; }
-        audio { height: 30px; width: 100%; margin-top: 5px; }
-
-        /* 🖼️ 相册/九宫格样式 */
         .moment-gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; max-width: 450px; }
         .moment-gallery img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 4px; cursor: pointer; }
-        .moment-gallery.single { display: block; }
         .moment-gallery.single img { max-width: 200px; max-height: 200px; width: auto; aspect-ratio: auto; }
-        
-        /* 相册模式特殊标记 */
-        .album-tag { font-size: 0.7rem; background: var(--link-color); color: white; padding: 2px 6px; border-radius: 4px; margin-left: 5px; vertical-align: middle; }
+        .moment-date { font-size: 0.75rem; color: #b2b2b2; }
 
-        /* 按钮与遮罩 */
+        /* 🖼️ 独立相册模式样式 (新增) */
+        .album-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); 
+            gap: 10px; 
+            padding-top: 10px;
+        }
+        .album-item { 
+            width: 100%; 
+            aspect-ratio: 1; 
+            object-fit: cover; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            transition: transform 0.2s;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .album-item:hover { transform: scale(1.03); }
+
+        /* 视频/音乐基础样式 */
+        .moment-video { width: 100%; max-width: 450px; border-radius: 8px; }
+        .music-player { background: rgba(255,255,255,0.2); padding: 10px; border-radius: 8px; max-width: 400px; }
+
+        /* 通用组件 */
         .filter-btn { cursor: pointer; border: none; background: rgba(255,255,255,0.3); padding: 4px 12px; border-radius: 15px; font-size: 0.8rem; }
         .filter-btn.active { background: var(--link-color); color: white; }
         #image-viewer { display: none; position: fixed; z-index: 10000; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); backdrop-filter: blur(5px); justify-content: center; align-items: center; }
@@ -55,9 +58,10 @@
 
 <header>
     <h1>･✦ Nightola-227 FM ✦･</h1>
-    <nav>
+    <nav id="mainNav">
         <a href="https://nightola.bearblog.dev/">首页</a>
-        <a href="#" style="color: var(--link-color)">动态</a>
+        <a id="nav-moments" class="active" onclick="switchMode('moments')">动态流</a>
+        <a id="nav-album" onclick="switchMode('album')">纯相册</a>
     </nav>
 </header>
 
@@ -66,8 +70,8 @@
         <button class="filter-btn active" id="btn-all">全部</button>
     </div>
 
-    <div id="momentsList">
-        <p style="text-align: center; color: #888;">正在加载动态...</p>
+    <div id="contentDisplay">
+        <p style="text-align: center; color: #888;">正在加载...</p>
     </div>
 </main>
 
@@ -76,91 +80,115 @@
 </div>
 
 <script>
-    const list = document.getElementById('momentsList');
-    const nav = document.getElementById('filterNav');
+    let globalData = [];
+    let currentMode = 'moments'; // moments 或 album
+    let currentYear = 'all';
+
+    const display = document.getElementById('contentDisplay');
+    const filterNav = document.getElementById('filterNav');
     const viewer = document.getElementById('image-viewer');
     const viewerImg = document.getElementById('viewer-img');
 
+    // 1. 获取数据
     fetch('data.json')
         .then(res => res.json())
         .then(data => {
-            renderList(data, 'all');
-            initNav(data);
-        })
-        .catch(err => {
-            list.innerHTML = `<p style="color:red">数据加载失败，请检查 JSON 格式。</p>`;
+            globalData = data;
+            initYearNav();
+            render();
         });
 
-    function initNav(allData) {
-        const years = [...new Set(allData.map(d => d.year))].sort().reverse();
+    // 2. 初始化年份导航
+    function initYearNav() {
+        const years = [...new Set(globalData.map(d => d.year))].sort().reverse();
         const allBtn = document.getElementById('btn-all');
-        allBtn.onclick = () => { setActive(allBtn); renderList(allData, 'all'); };
+        allBtn.onclick = () => { currentYear = 'all'; updateActiveBtn(allBtn); render(); };
 
         years.forEach(year => {
             const btn = document.createElement('button');
             btn.className = 'filter-btn';
             btn.innerText = year;
-            btn.onclick = () => { setActive(btn); renderList(allData, year); };
-            nav.appendChild(btn);
+            btn.onclick = () => { currentYear = year; updateActiveBtn(btn); render(); };
+            filterNav.appendChild(btn);
         });
     }
 
-    function setActive(btn) {
+    function updateActiveBtn(activeBtn) {
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+        activeBtn.classList.add('active');
     }
 
-    function renderList(allData, filterYear) {
-        list.innerHTML = '';
-        const filtered = filterYear === 'all' ? allData : allData.filter(d => d.year === filterYear);
-        
-        if(filtered.length === 0) {
-            list.innerHTML = '<p style="text-align:center; color:#888;">暂无内容</p>';
-            return;
+    // 3. 模式切换逻辑
+    function switchMode(mode) {
+        currentMode = mode;
+        document.querySelectorAll('#mainNav a').forEach(a => a.classList.remove('active'));
+        document.getElementById('nav-' + mode).classList.add('active');
+        render();
+    }
+
+    // 4. 核心渲染函数
+    function render() {
+        display.innerHTML = '';
+        const filtered = currentYear === 'all' ? globalData : globalData.filter(d => d.year === currentYear);
+
+        if (currentMode === 'moments') {
+            renderMoments(filtered);
+        } else {
+            renderAlbum(filtered);
         }
+    }
 
-        filtered.forEach(item => {
+    // 渲染动态流模式
+    function renderMoments(data) {
+        data.forEach(item => {
             let mediaHtml = '';
-
-            // 1. 判断是否是视频
             if (item.video) {
                 mediaHtml = `<video class="moment-video" controls src="${item.video}" preload="metadata"></video>`;
-            } 
-            // 2. 判断是否是音乐
-            else if (item.music) {
-                mediaHtml = `
-                    <div class="music-player">
-                        <div class="music-info">
-                            <div class="music-title">${item.music.title}</div>
-                            <div class="music-artist">${item.music.artist}</div>
-                            <audio controls src="${item.music.url}"></audio>
-                        </div>
-                    </div>`;
-            }
-            // 3. 处理图片/相册
-            else if (item.imgs && item.imgs.length > 0) {
-                const isSingle = item.imgs.length === 1;
-                const imgList = item.imgs.map(src => 
-                    `<img src="${src}" loading="lazy" onclick="event.stopPropagation(); openViewer('${src}')">`
-                ).join('');
-                mediaHtml = `<div class="moment-gallery ${isSingle ? 'single' : ''}">${imgList}</div>`;
+            } else if (item.music) {
+                mediaHtml = `<div class="music-player"><b>${item.music.title}</b><audio controls src="${item.music.url}"></audio></div>`;
+            } else if (item.imgs && item.imgs.length > 0) {
+                const imgList = item.imgs.map(src => `<img src="${src}" onclick="openViewer('${src}')">`).join('');
+                mediaHtml = `<div class="moment-gallery ${item.imgs.length === 1 ? 'single' : ''}">${imgList}</div>`;
             }
 
             const card = document.createElement('div');
             card.className = 'moment-card';
             card.innerHTML = `
-                <div class="moment-avatar-wrap">
-                    <img src="images/avatar.jpg" class="item-avatar">
-                </div>
+                <div class="moment-avatar-wrap"><img src="images/avatar.jpg" class="item-avatar"></div>
                 <div class="moment-body">
-                    <div class="moment-author">亚离解星 ${item.album ? '<span class="album-tag">相册</span>' : ''}</div>
+                    <div class="moment-author">亚离解星</div>
                     <div class="moment-text">${item.text}</div>
                     ${mediaHtml}
                     <div class="moment-date">${item.date}</div>
-                </div>
-            `;
-            list.appendChild(card);
+                </div>`;
+            display.appendChild(card);
         });
+    }
+
+    // 渲染纯相册模式 (新增)
+    function renderAlbum(data) {
+        const grid = document.createElement('div');
+        grid.className = 'album-grid';
+        
+        // 提取所有数据中的图片，铺平展示
+        data.forEach(item => {
+            if (item.imgs && item.imgs.length > 0) {
+                item.imgs.forEach(src => {
+                    const img = document.createElement('img');
+                    img.className = 'album-item';
+                    img.src = src;
+                    img.loading = "lazy";
+                    img.onclick = () => openViewer(src);
+                    grid.appendChild(img);
+                });
+            }
+        });
+        
+        if (grid.children.length === 0) {
+            display.innerHTML = '<p style="text-align:center; color:#888;">暂无照片</p>';
+        } else {
+            display.appendChild(grid);
+        }
     }
 
     function openViewer(src) {
