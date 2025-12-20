@@ -1,9 +1,8 @@
 /**
  * Nightola-227 FM 终极管理脚本
- * 状态：UI 精准还原 + 同步逻辑修复版
+ * 功能：Supabase 实时状态同步 + Last.fm 音乐同步 + 动态流展示 + UI 生命周期管理
  */
 
-// 1. 基础配置
 const GITHUB_USER = "nightola";
 const GITHUB_REPO = "blog-moments";
 const GITHUB_BRANCH = "main";
@@ -17,11 +16,10 @@ const CONFIG = {
     lastfmKey: '875851062e9caa138b84dcc5554d026e'
 };
 
-// 2. 全局状态
 let rawData = { moments: [], posts: [] };
 let currentMode = 'home', currentYear = 'all', searchQuery = '';
 
-// 观测站进程管理
+// 观测站进程状态管理器
 let obsState = {
     sbClient: null,
     channel: null,
@@ -29,7 +27,7 @@ let obsState = {
     pokeCount: parseInt(localStorage.getItem('db_pokes') || "0")
 };
 
-// 3. 问答数据 (完整版)
+// 问答数据
 const qnaData = [
     {q: "为什么要创建博客？", a: "简单打个比方吧，你可以把这个博客当作我在这个网络世界里自定义程度比较高的小房子...最终还是选择了这个平台作为博客根据地了。", time: "2025-12-13 01:30"},
     {q: "「Nightola-227 FM」的由来？", a: "Nightola 这个词是从 Night 来的自创词，现在就作为我的英文id使用了。227 就是我的生日，2 月 27 日。", time: "2025-12-13 01:51"},
@@ -37,13 +35,12 @@ const qnaData = [
     {q: "说出一首最喜欢的中文歌并讲述理由", a: "河图的《灯花佐酒》。很喜欢这首歌曲的氛围，这里面有故人离去所带来的那种伤痛...", time: "2025-12-13 02:48"},
     {q: "为什么会喜欢夜晚？", a: "我依然喜欢能自由支配、不被打扰的时光。", time: "2025-12-13 03:05"},
     {q: "小时候最喜欢玩的游戏是什么？", a: "奥比岛、小花仙，还有皮卡堂。", time: "2025-12-13 08:39"},
-    {q: "过生日的时候最想收到什么礼物？", a: "周边只要好看都可以，不论价格。", time: "2025-12-13 09:05"},
-    {q: "有爱喝的饮料吗？", a: "偶然喝喝奶茶、椰奶还能接受。", time: "2025-12-13 09:11"},
+    {q: "过生日的时候最想收到什么礼物？", a: "周边只要好看都可以，不论价格。", time: "2025-12-13 09:11"},
     {q: "最喜欢吃什么？", a: "我无法确定我对一个食物的喜欢是否能保持长期且坚定的态度。", time: "2025-12-13 09:28"},
     {q: "为什么会喜欢玩碧蓝航线？", a: "没有特别的强度焦虑和糟糕的抽卡体验。还有q版小人很可爱。", time: "2025-12-13 09:33"}
 ];
 
-// 4. 初始化
+// --- 核心初始化 ---
 async function init() {
     try {
         const res = await fetch('data.json?t=' + Date.now());
@@ -86,7 +83,7 @@ function render() {
     switch(currentMode) {
         case 'home': 
             renderHome(display); 
-            setTimeout(mountObservationStation, 50); // 确保DOM挂载后启动逻辑
+            setTimeout(mountObservationStation, 50); 
             break;
         case 'moments': renderMoments(filtered, display); break;
         case 'album': renderAlbum(filtered, display); break;
@@ -95,12 +92,12 @@ function render() {
     }
 }
 
-// 5. 核心：观测站逻辑 (精准还原 UI)
+// --- 首页渲染 ---
 function renderHome(container) {
     container.innerHTML = `
         <section class="db-container">
             <header class="db-header">
-                <h3 class="db-title">亚离解星观测站 <svg class="star-dec" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;display:inline;vertical-align:middle;animation:star-rot 8s linear infinite"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg></h3>
+                <h3 class="db-title">亚离解星观测站 <svg class="star-dec" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg></h3>
                 <span class="db-live-tag">LIVE</span>
             </header>
             <section class="db-grid">
@@ -121,15 +118,17 @@ function renderHome(container) {
                 <article class="db-card app-box full-row"><span class="db-label">正在使用 (MB)</span><span class="app-content"><svg class="app-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12" y2="18"></line></svg><span id="mobile-app-name" class="app-name">休息中</span></span><span id="mobile-dot" class="dot-indicator"></span></article>
                 <article class="db-card music-box full-row" id="music-card"><span class="db-label">正在聆听</span><div class="music-body"><img id="music-art" class="music-img" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Art"><div class="music-content"><div class="music-info-wrap"><span id="music-track" class="music-title">目前没有在听歌...</span><span id="music-artist" class="music-sub">静音中</span></div></div></div></article>
                 <article class="db-card msg-box full-row">
-                    <div class="msg-header"><span class="db-label">私信互动</span><span class="db-meta">加密传输中</span></div>
+                    <div class="msg-header"><span class="db-label">私信互动</span><span class="db-meta">加密传输</span></div>
                     <form action="https://formspree.io/f/mdkrvbap" method="POST" class="msg-form" id="contact-form">
-                        <div class="input-group">
-                            <textarea name="message" placeholder="此刻想对我说点什么？" required class="msg-input msg-area"></textarea>
-                            <div id="reply-wrapper" style="display:none;margin-top:8px;"><input type="text" name="_replyto" id="reply-field" placeholder="如何称呼你或联系你？(选填)" class="msg-input reply-input"></div>
+                        <div class="msg-input-container">
+                            <textarea name="message" placeholder="此刻想对我说点什么？" required class="msg-area"></textarea>
+                            <div id="reply-wrapper" class="reply-hidden">
+                                <input type="text" name="_replyto" id="reply-field" placeholder="如何称呼你或联系你？" class="reply-input">
+                            </div>
                         </div>
-                        <div class="msg-ctrl">
-                            <button type="button" class="opt-btn" onclick="toggleReply(this)" id="opt-toggle">+ 留下回信方式</button>
-                            <button type="submit" class="msg-btn" id="submit-btn">发射信号</button>
+                        <div class="msg-footer-ctrl">
+                            <button type="button" class="opt-text-btn" onclick="toggleReply(this)" id="opt-toggle">+ 联系方式</button>
+                            <button type="submit" class="msg-submit-btn" id="submit-btn">发射信号</button>
                         </div>
                     </form>
                 </article>
@@ -138,6 +137,7 @@ function renderHome(container) {
         </section>`;
 }
 
+// --- 同步挂载逻辑 ---
 function mountObservationStation() {
     const d = {
         statusText: document.getElementById('status-text'),
@@ -151,7 +151,6 @@ function mountObservationStation() {
     };
 
     if(!d.statusText) return;
-
     d.pokeCount.textContent = obsState.pokeCount + " 共鸣";
 
     const renderData = (row) => {
@@ -207,7 +206,7 @@ function mountObservationStation() {
     obsState.intervals.push(setInterval(updateMusic, 15000));
 }
 
-// 6. 全局交互函数
+// --- 交互辅助 ---
 window.handlePoke = (e) => {
     e.stopPropagation();
     obsState.pokeCount++;
@@ -222,25 +221,81 @@ window.handlePoke = (e) => {
 
 window.toggleReply = (btn) => {
     const f = document.getElementById('reply-wrapper');
-    const isH = f.style.display === 'none';
-    f.style.display = isH ? 'block' : 'none';
-    btn.textContent = isH ? '－ 取消回信方式' : '+ 留下回信方式';
+    const isH = f.classList.contains('reply-hidden');
+    if(isH) { f.classList.remove('reply-hidden'); btn.textContent = '－ 联系方式'; }
+    else { f.classList.add('reply-hidden'); btn.textContent = '+ 联系方式'; }
 };
 
-// 7. 其他模块渲染 (省略逻辑保持不变...)
-function renderMoments(data, container) { /* ...保持之前一致的渲染逻辑... */ }
-function renderAlbum(data, container) { /* ... */ }
-function renderPostList(posts, container) { /* ... */ }
-function renderQnA(container) { /* ... */ }
+// --- 动态流、相册、文章列表、问答渲染 ---
+function renderMoments(data, container) {
+    data.forEach((item, idx) => {
+        const card = document.createElement('div');
+        card.className = 'moment-card';
+        let mediaHtml = '';
+        if (item.imgs) mediaHtml = `<div class="moment-gallery">${item.imgs.map(img => `<img src="${getCDNUrl(img)}" onclick="view('${getCDNUrl(img)}')">`).join('')}</div>`;
+        if (item.music) mediaHtml = `<a href="${item.music.url}" target="_blank" class="music-share-card"><img src="${getCDNUrl(item.music.cover)}" class="music-cover"><div><div class="music-title">${item.music.title}</div><div class="music-artist">${item.music.artist}</div></div></a>`;
+        card.innerHTML = `<img src="${getCDNUrl('images/avatar.jpg')}" class="item-avatar"><div style="flex:1; min-width:0;"><div style="color:var(--accent-color); font-weight:bold;">亚离解星</div><div id="t-${idx}" class="moment-text collapsed">${item.text}</div><div id="b-${idx}" class="expand-btn" style="display:none" onclick="toggle(${idx})">全文</div>${mediaHtml}<div style="font-size:0.75rem; color:#bbb; margin-top:10px;">${item.date}</div></div>`;
+        container.appendChild(card);
+        const t = document.getElementById(`t-${idx}`);
+        if (t && t.scrollHeight > t.offsetHeight) document.getElementById(`b-${idx}`).style.display = 'block';
+    });
+}
 
-// 8. 辅助函数
+function renderAlbum(data, container) {
+    const grid = document.createElement('div'); grid.className = 'album-grid';
+    data.forEach(item => {
+        if (item.imgs) item.imgs.forEach(img => {
+            const el = document.createElement('img'); el.className = 'album-item'; el.src = getCDNUrl(img); el.onclick = () => view(getCDNUrl(img));
+            grid.appendChild(el);
+        });
+    });
+    container.appendChild(grid);
+}
+
+function renderPostList(posts, container) {
+    posts.filter(p => p.title.toLowerCase().includes(searchQuery.toLowerCase())).forEach(post => {
+        const div = document.createElement('div');
+        div.className = 'post-item';
+        div.style = "background:var(--db-card-bg); padding:20px; border-radius:18px; margin-bottom:12px; cursor:pointer; border:1px solid var(--db-border);";
+        div.innerHTML = `<div style="font-weight:bold; color:var(--accent-color);">${post.title}</div><div style="font-size:0.8rem; opacity:0.6;">${post.date}</div>`;
+        div.onclick = () => loadMarkdown(post.file);
+        container.appendChild(div);
+    });
+}
+
+function renderQnA(container) {
+    container.innerHTML = `<div class="qna-container"><article class="qna-card"><div class="section-title">📮 提问箱</div><textarea id="qnaInput" class="db-input" placeholder="在这里 write 下你的问题..." rows="3"></textarea><button onclick="submitQnA()" class="db-btn" style="margin-top:10px">发送提问</button></article><div id="qnaList" style="margin-top:20px">${qnaData.map((item, i) => `<div class="qna-item visible ${i===0?'active':''}" onclick="this.classList.toggle('active')"><div class="qna-q">${item.q}</div><div class="qna-a"><p>${item.a}</p><span class="answer-time">${item.time}</span></div></div>`).join('')}</div></div>`;
+}
+
+// --- 通用工具 ---
 const getCDNUrl = url => (!url || url.startsWith('http')) ? url : `https://cdn.jsdelivr.net/gh/${GITHUB_USER}/${GITHUB_REPO}@${GITHUB_BRANCH}/${url}`;
 const getRawUrl = path => `https://${GITHUB_USER}.github.io/${GITHUB_REPO}/${path}`;
 function handleSearch() { searchQuery = document.getElementById('searchInput').value; render(); }
-function updateSidebar(data) { /* 统计逻辑 */ }
-function renderYearBtns() { /* 年份按钮 */ }
-function setYear(y, b) { currentYear = y; render(); }
+function updateSidebar(data) {
+    let w = 0, i = 0, m = 0;
+    data.forEach(item => { w += (item.text||"").length; i += (item.imgs?item.imgs.length:0); if(item.music) m++; });
+    const sc = document.getElementById('s-count');
+    if (sc) { sc.innerText = data.length; document.getElementById('s-words').innerText = w; document.getElementById('s-imgs').innerText = i; document.getElementById('s-music').innerText = m; }
+}
+function renderYearBtns() {
+    const years = [...new Set(rawData.moments.map(d => d.year))].sort().reverse();
+    const c = document.getElementById('yearFilter');
+    if(!c) return;
+    c.innerHTML = `<button class="filter-btn active" onclick="setYear('all', this)">全部</button>`;
+    years.forEach(y => c.innerHTML += `<button class="filter-btn" onclick="setYear('${y}', this)">${y}</button>`);
+}
+function setYear(y, b) { currentYear = y; document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active')); b.classList.add('active'); render(); }
+function toggle(i) { const t = document.getElementById(`t-${i}`), b = document.getElementById(`b-${i}`); const isC = t.classList.toggle('collapsed'); b.innerText = isC ? '全文' : '收起'; }
 function view(s) { const v = document.getElementById('image-viewer'); v.querySelector('img').src = s; v.style.display = 'flex'; }
-async function loadMarkdown(path) { /* Markdown 加载逻辑 */ }
+async function loadMarkdown(path) {
+    const display = document.getElementById('contentDisplay');
+    display.innerHTML = '读取中...';
+    try {
+        const res = await fetch(getRawUrl(path));
+        const md = await res.text();
+        display.innerHTML = `<div class="markdown-body">${marked.parse(md)}<hr><button onclick="setMode('posts')" class="db-btn" style="width:auto;padding:8px 20px;">← 返回</button></div>`;
+        window.scrollTo(0, 0);
+    } catch (e) { display.innerHTML = "读取失败"; }
+}
 
 init();
