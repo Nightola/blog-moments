@@ -1,4 +1,4 @@
-/* 1. 基础全局样式 */
+/* 1. 基础重置 */
 :root {
     --accent-color: #7d9ba6;
     --db-bg: #f5f7f9;
@@ -8,58 +8,180 @@
     --text-color: #333;
 }
 
-/* 2. 观测站布局 */
-.db-container { max-width: 600px; margin: 0 auto; padding: 10px; }
-.db-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 0 5px; }
-.db-title { font-size: 1.1rem; font-weight: 800; color: var(--text-color); display: flex; align-items: center; gap: 8px; }
-.db-live-tag { background: #ff3b30; color: #fff; font-size: 10px; font-weight: 900; padding: 2px 6px; border-radius: 4px; letter-spacing: 1px; }
+* { box-sizing: border-box; }
 
-.db-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+body { 
+    background-color: var(--db-bg); 
+    color: var(--text-color);
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* 2. 观测站布局容器 */
+.db-container { 
+    max-width: 600px; 
+    margin: 0 auto; 
+    padding: 20px 15px; 
+}
+
+.db-header { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    margin-bottom: 24px; 
+}
+
+.db-title { 
+    font-size: 1.15rem; 
+    font-weight: 800; 
+    margin: 0;
+    display: flex; 
+    align-items: center; 
+    gap: 8px; 
+}
+
+.db-live-tag { 
+    background: #ff3b30; 
+    color: #fff; 
+    font-size: 10px; 
+    font-weight: 900; 
+    padding: 3px 7px; 
+    border-radius: 5px; 
+    text-transform: uppercase;
+}
+
+/* 3. 格栅布局系统 */
+.db-grid { 
+    display: grid; 
+    grid-template-columns: repeat(2, 1fr); 
+    gap: 12px; 
+}
+
 .full-row { grid-column: span 2; }
-.db-card { background: var(--db-card-bg); border-radius: 20px; padding: 16px; border: 1px solid var(--db-border); position: relative; overflow: hidden; }
 
-.db-label { font-size: 11px; font-weight: 700; color: var(--db-sub); text-transform: uppercase; margin-bottom: 12px; display: block; }
-.status-val { font-size: 1.4rem; font-weight: 800; margin: 5px 0; }
-.db-meta { font-size: 11px; color: var(--db-sub); font-weight: 600; }
-.db-clock { font-size: 1.8rem; font-weight: 900; letter-spacing: -1px; }
+/* 4. 卡片基础通用样式 */
+.db-card { 
+    background: var(--db-card-bg); 
+    border-radius: 24px; 
+    padding: 20px; 
+    border: 1px solid var(--db-border); 
+    position: relative; 
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
 
-/* 3. 私信互动卡片优化 (核心修改点) */
-.msg-box { padding: 20px !important; }
-.msg-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-.msg-input-container { background: rgba(144, 157, 171, 0.08); border-radius: 16px; padding: 6px; margin-bottom: 12px; }
-.msg-area { width: 100%; min-height: 70px; background: transparent !important; border: none !important; font-size: 14px; padding: 10px; outline: none; resize: none; color: var(--text-color); }
+.db-label { 
+    font-size: 11px; 
+    font-weight: 700; 
+    color: var(--db-sub); 
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    display: block;
+}
+
+/* 5. 各种组件细节 */
+.status-val { font-size: 1.4rem; font-weight: 800; margin: 8px 0; }
+.db-clock { font-size: 1.8rem; font-weight: 900; line-height: 1; }
+.db-meta { font-size: 12px; color: var(--db-sub); font-weight: 500; }
+
+/* 能量条 */
+.energy-bar { height: 5px; background: rgba(0,0,0,0.05); border-radius: 3px; margin: 10px 0 5px; overflow: hidden; }
+.energy-in { height: 100%; background: var(--accent-color); transition: width 0.6s ease; }
+
+/* 戳一戳互动 */
+.status-footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 10px; }
+.poke-btn { 
+    background: #f0f2f5; 
+    border: none; 
+    padding: 6px 12px; 
+    border-radius: 12px; 
+    font-size: 11px; 
+    font-weight: 700; 
+    color: var(--accent-color); 
+    cursor: pointer; 
+}
+
+/* APP 使用状态 */
+.app-content { display: flex; align-items: center; gap: 10px; margin-top: 5px; }
+.app-icon { width: 18px; height: 18px; opacity: 0.7; }
+.app-name { font-size: 15px; font-weight: 700; }
+.dot-indicator { width: 8px; height: 8px; background: #d1d1d6; border-radius: 50%; position: absolute; top: 22px; right: 22px; }
+.dot-indicator.active { background: #34c759; box-shadow: 0 0 10px rgba(52,199,89,0.4); }
+
+/* 音乐播放 */
+.music-body { display: flex; gap: 14px; align-items: center; }
+.music-img { width: 50px; height: 50px; border-radius: 12px; object-fit: cover; background: #eee; }
+.music-title { font-size: 14px; font-weight: 700; display: block; margin-bottom: 2px; }
+
+/* 6. 核心：私信互动 UI 优化 (轻盈版) */
+.msg-box { padding: 22px !important; }
+.msg-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.msg-input-container { 
+    background: rgba(144, 157, 171, 0.07); 
+    border-radius: 18px; 
+    padding: 10px; 
+    margin-bottom: 14px; 
+}
+.msg-area { 
+    width: 100%; 
+    min-height: 80px; 
+    background: transparent !important; 
+    border: none !important; 
+    font-size: 14px; 
+    padding: 8px; 
+    outline: none; 
+    resize: none; 
+    color: var(--text-color); 
+    line-height: 1.5;
+}
 .reply-hidden { display: none; }
-.reply-input { width: 90%; margin: 0 auto 10px; display: block; background: #fff; border: 1px solid var(--db-border); padding: 8px 12px; border-radius: 10px; font-size: 13px; }
+.reply-input { 
+    width: calc(100% - 16px); 
+    margin: 4px 8px 8px; 
+    background: #fff; 
+    border: 1px solid rgba(0,0,0,0.04); 
+    padding: 10px 14px; 
+    border-radius: 12px; 
+    font-size: 13px; 
+    outline: none;
+}
 
-.msg-footer-ctrl { display: flex; justify-content: space-between; align-items: center; padding-top: 4px; }
-.opt-text-btn { background: none; border: none; color: var(--db-sub); font-size: 13px; font-weight: 600; cursor: pointer; }
+.msg-footer-ctrl { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+}
+.opt-text-btn { 
+    background: none; 
+    border: none; 
+    color: var(--db-sub); 
+    font-size: 13px; 
+    font-weight: 600; 
+    cursor: pointer;
+    padding: 0;
+}
 
-/* 按钮尺寸缩小优化 */
 .msg-submit-btn { 
-    background: #2c3e50 !important; 
+    background: #333 !important; 
     color: #fff !important; 
     border: none; 
-    padding: 8px 18px !important; 
-    border-radius: 18px !important; 
+    padding: 10px 22px !important; 
+    border-radius: 22px !important; 
     font-size: 13px !important; 
     font-weight: 700 !important; 
     cursor: pointer; 
-    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    transition: transform 0.2s ease;
 }
+.msg-submit-btn:hover { transform: translateY(-1px); }
 
-/* 4. 其他 UI 细节 */
-.dot-indicator { width: 8px; height: 8px; background: #ccc; border-radius: 50%; position: absolute; top: 16px; right: 16px; }
-.dot-indicator.active { background: #4cd964; box-shadow: 0 0 8px rgba(76,217,100,0.5); }
-.energy-bar { height: 4px; background: rgba(0,0,0,0.05); border-radius: 2px; margin-top: 10px; overflow: hidden; }
-.energy-in { height: 100%; background: var(--accent-color); transition: width 0.5s ease; }
-.db-bubble { position: absolute; top: -30px; left: 50%; transform: translateX(-50%); background: #333; color: #fff; padding: 5px 10px; border-radius: 8px; font-size: 12px; opacity: 0; transition: 0.3s; pointer-events: none; }
-.db-bubble.show { top: 10px; opacity: 1; }
-
-.poke-btn { background: var(--db-bg); border: none; padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 700; color: var(--accent-color); cursor: pointer; }
-.music-img { width: 45px; height: 45px; border-radius: 10px; object-fit: cover; }
-.music-body { display: flex; gap: 12px; align-items: center; }
-.music-title { font-size: 14px; font-weight: 700; display: block; }
-.music-sub { font-size: 12px; color: var(--db-sub); }
-
-.db-footer { margin-top: 30px; padding: 20px 0; border-top: 1px solid var(--db-border); display: flex; justify-content: space-between; align-items: center; }
+/* 7. 底部 */
+.db-footer { 
+    margin-top: 40px; 
+    padding: 20px 5px; 
+    border-top: 1px solid var(--db-border); 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+}
 .footer-link { font-weight: 800; color: var(--db-sub); text-decoration: none; font-size: 13px; }
