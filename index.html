@@ -3,73 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nightola-227 FM | 动态看板</title>
+    <title>Nightola-227 FM</title>
     <link rel="stylesheet" href="style.css">
-    
-    <script src="https://cdn.jsdelivr.net/npm/wordcloud@1.2.2/src/wordcloud2.min.js"></script>
-    
-    <script src="https://lib.baomitu.com/marked/4.0.2/marked.min.js"></script>
-
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- 仅保留必要的第三方库 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
-
 <body>
-
-    <header>
-        <h1>･✦ Nightola-227 FM ✦･</h1>
-        <nav id="modeNav">
-            <a id="nav-home" class="active" onclick="setMode('home')">观测站</a>
-            <a id="nav-moments" class="active" onclick="setMode('moments')">动态流</a>
-            <a id="nav-album" onclick="setMode('album')">纯相册</a>
-            <a id="nav-posts" onclick="setMode('posts')">长文章</a>
-            <a id="nav-qna" onclick="setMode('qna')">提问箱</a>
-        </nav>
-    </header>
-
     <div class="container">
-        <main class="main-content">
-            <div class="year-bar" id="yearFilter">
-                <button class="filter-btn active" onclick="setYear('all', this)">全部</button>
-            </div>
-            <div id="contentDisplay">正在同步数据...</div>
-        </main>
-
+        <!-- 侧边栏：导航与统计 -->
         <aside class="sidebar">
-            <div class="side-card">
-                <div class="side-title">搜索动态</div>
-                <div class="search-box">
-                    <input type="text" id="searchInput" placeholder="搜索文字内容..." oninput="handleSearch()">
-                </div>
+            <div class="profile-section">
+                <img src="https://cdn.jsdelivr.net/gh/nightola/blog-moments@main/images/avatar.jpg" class="side-avatar" alt="Avatar">
+                <h1 class="side-name">亚离解星</h1>
+                <p class="side-bio">Nightola-227 FM</p>
             </div>
 
-            <div class="side-card">
-                <div class="side-title">年度数据看板</div>
-                <div class="stat-list">
-                    <div class="stat-item"><span id="s-count" class="stat-num">0</span><span class="stat-label">动态条数</span></div>
-                    <div class="stat-item"><span id="s-words" class="stat-num">0</span><span class="stat-label">累计字数</span></div>
-                    <div class="stat-item"><span id="s-imgs" class="stat-num">0</span><span class="stat-label">相册图片</span></div>
-                    <div class="stat-item"><span id="s-music" class="stat-num">0</span><span class="stat-label">分享音乐</span></div>
-                </div>
+            <nav class="nav-menu" id="modeNav">
+                <a href="#" class="nav-link active" id="nav-moments" onclick="setMode('moments')">动态流</a>
+                <a href="#" class="nav-link" id="nav-album" onclick="setMode('album')">相册集</a>
+                <a href="#" class="nav-link" id="nav-posts" onclick="setMode('posts')">文章页</a>
+                <a href="#" class="nav-link" id="nav-qna" onclick="setMode('qna')">提问箱</a>
+            </nav>
+
+            <div class="stats-box" id="sidebarStats">
+                <div class="stat-item"><span>总计</span><b id="s-count">0</b></div>
+                <div class="stat-item"><span>文字</span><b id="s-words">0</b></div>
+                <div class="stat-item"><span>照片</span><b id="s-imgs">0</b></div>
             </div>
 
-            <div class="side-card">
-                <div class="side-title">高频词云</div>
-                <div id="wordcloud-container">
-                    <canvas id="wordcloud-canvas"></canvas>
-                </div>
+            <div class="search-container">
+                <input type="text" id="searchInput" placeholder="搜索内容..." oninput="handleSearch()">
             </div>
         </aside>
+
+        <!-- 主内容区 -->
+        <main class="main-content">
+            <div class="year-filters" id="yearFilter" style="display: flex;">
+                <!-- 由 JS 动态填充 -->
+            </div>
+            <div id="contentDisplay">
+                <!-- 内容渲染区域 -->
+            </div>
+        </main>
     </div>
 
-    <div id="image-viewer" onclick="this.style.display='none'"><img id="viewer-img"></div>
+    <!-- 图片查看器 -->
+    <div id="image-viewer" onclick="this.style.display='none'">
+        <img src="" alt="Full view">
+    </div>
 
     <script src="script.js"></script>
 </body>
 </html>
-
-
-
-
-
-
-
