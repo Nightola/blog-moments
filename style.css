@@ -193,3 +193,24 @@ nav a.active { color: white; background: var(--link-color); }
 .markdown-body h1 { border-bottom: 1px solid #eee; padding-bottom: 10px; }
 .markdown-body img { max-width: 100%; border-radius: 8px; }
 .markdown-body pre { background: #f6f8fa; padding: 16px; border-radius: 6px; overflow: auto; }
+
+/* 提问箱专用样式 */
+.qna-container { max-width: 700px; width: 100%; margin: 0 auto; }
+.qna-card { margin-bottom: 24px; color: var(--text-color); }
+.section-title { display: flex; justify-content: space-between; align-items: center; font-size: 1.1rem; font-weight: 800; margin-bottom: 12px; }
+.db-input { width: 100%; box-sizing: border-box; background: rgba(255, 255, 255, 0.4); border: 1px solid rgba(0, 0, 0, 0.1); padding: 10px 14px; border-radius: 8px; font-size: 14px; color: inherit; outline: none; margin-bottom: 10px; transition: all .2s; }
+.db-input:focus { border-color: var(--accent-color); background: rgba(255, 255, 255, 0.6); }
+.qna-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.qna-check { font-size: 13px; display: flex; align-items: center; gap: 6px; cursor: pointer; opacity: 0.8; }
+.db-btn { width: 100%; background: var(--accent-color); color: white; border: none; padding: 12px; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+.db-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+.qna-divider { height: 1px; background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.1), transparent); margin: 25px 0 20px; position: relative; display: flex; justify-content: center; }
+.qna-divider:after { content: '✦'; position: absolute; top: -8px; color: var(--accent-color); font-size: 12px; background: var(--bg-color); padding: 0 10px; }
+.qna-item { background: rgba(255, 255, 255, 0.3); border: 1px solid rgba(0, 0, 0, 0.05); border-radius: 8px; margin-bottom: 8px; display: none; overflow: hidden; }
+.qna-item.visible { display: block; }
+.qna-q { padding: 12px 14px; font-weight: 600; font-size: 14px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+.qna-q:after { content: '▾'; color: var(--accent-color); transition: 0.3s; }
+.qna-item.active .qna-q:after { transform: rotate(180deg); }
+.qna-a { padding: 0 14px; max-height: 0; overflow: hidden; transition: all 0.3s ease; font-size: 14px; line-height: 1.6; }
+.qna-item.active .qna-a { padding: 12px 14px; max-height: 2000px; border-top: 1px dashed rgba(0,0,0,0.1); }
+.answer-time { display: block; margin-top: 12px; font-size: 11px; opacity: 0.6; text-align: right; }
