@@ -7,56 +7,85 @@
     <script src="https://cdn.jsdelivr.net/npm/wordcloud@1.2.2/src/wordcloud2.min.js"></script>
     <style>
         :root { --width: 1000px; --text-color: #444; --link-color: #3273dc; --accent-color: #576b95; }
-        body { font-family: sans-serif; margin: auto; padding: 20px; max-width: var(--width); background-image: url("https://pic1.imgdb.cn/item/6946acea29a616e528622615.jpg"); background-attachment: fixed; background-size: cover; color: var(--text-color); }
+        body { font-family: sans-serif; margin: auto; padding: 20px; max-width: var(--width); background-image: url("https://pic1.imgdb.cn/item/6946acea29a616e528622615.jpg"); background-attachment: fixed; background-size: cover; color: var(--text-color); line-height: 1.6; }
         
         /* 导航 */
         header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
         nav { display: flex; gap: 10px; }
-        nav a { text-decoration: none; color: var(--text-color); font-weight: bold; cursor: pointer; padding: 6px 12px; border-radius: 6px; }
+        nav a { text-decoration: none; color: var(--text-color); font-weight: bold; cursor: pointer; padding: 6px 12px; border-radius: 6px; transition: 0.3s; }
         nav a.active { color: white; background: var(--link-color); }
 
         /* 主容器布局 */
         .container { display: flex; gap: 25px; align-items: flex-start; }
-        .main-content { flex: 1; background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(10px); padding: 25px; border-radius: 16px; min-height: 500px; }
+        
+        /* 左侧主内容区 - 修复溢出的核心 */
+        .main-content { 
+            flex: 1; 
+            min-width: 0; /* 关键：防止 flex 子元素溢出 */
+            background: rgba(255, 255, 255, 0.4); 
+            backdrop-filter: blur(10px); 
+            padding: 25px; 
+            border-radius: 16px; 
+            min-height: 500px; 
+            overflow: hidden; /* 确保内容不超出圆角边框 */
+        }
         
         /* 侧边栏样式 */
-        .sidebar { width: 280px; position: sticky; top: 20px; display: flex; flex-direction: column; gap: 20px; }
+        .sidebar { width: 280px; position: sticky; top: 20px; display: flex; flex-direction: column; gap: 20px; flex-shrink: 0; }
         .side-card { background: rgba(255, 255, 255, 0.5); backdrop-filter: blur(10px); padding: 20px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.3); }
         .side-title { font-size: 0.9rem; font-weight: bold; color: var(--accent-color); margin-bottom: 15px; border-left: 4px solid var(--accent-color); padding-left: 8px; }
 
         /* 统计数据 */
         .stat-list { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .stat-item { display: flex; flex-direction: column; }
-        .stat-num { font-size: 1.2rem; font-weight: bold; color: #333; }
+        .stat-num { font-size: 1.2rem; font-weight: bold; color: #333; display: block; }
         .stat-label { font-size: 0.7rem; color: #777; }
 
         /* 词云 */
         #wordcloud-container { width: 100%; height: 200px; display: flex; align-items: center; justify-content: center; }
         .no-data-hint { font-size: 0.8rem; color: #888; text-align: center; }
 
-        /* 动态内容 */
+        /* 年份筛选 */
         .year-bar { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
         .filter-btn { cursor: pointer; border: none; background: rgba(255,255,255,0.4); padding: 4px 12px; border-radius: 15px; font-size: 0.8rem; }
         .filter-btn.active { background: var(--accent-color); color: white; }
 
+        /* 动态内容卡片 */
         .moment-card { padding: 20px 0; border-bottom: 1px solid rgba(0, 0, 0, 0.05); display: flex; gap: 12px; }
-        .item-avatar { width: 42px; height: 42px; border-radius: 6px; object-fit: cover; }
-        .moment-text { font-size: 0.95rem; line-height: 1.6; white-space: pre-wrap; margin: 8px 0; }
+        .item-avatar { width: 42px; height: 42px; border-radius: 6px; object-fit: cover; flex-shrink: 0; }
+        .moment-text { font-size: 0.95rem; white-space: pre-wrap; margin: 8px 0; }
         .moment-text.collapsed { max-height: 8em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; }
-        .expand-btn { color: var(--accent-color); cursor: pointer; font-size: 0.85rem; font-weight: bold; }
+        .expand-btn { color: var(--accent-color); cursor: pointer; font-size: 0.85rem; font-weight: bold; margin-bottom: 10px; display: inline-block; }
         
+        /* 动态里的九宫格 */
         .moment-gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; max-width: 400px; margin-top: 10px; }
         .moment-gallery img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 4px; cursor: pointer; }
-        .album-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; }
+
+        /* 🖼️ 纯相册模式网格 - 修复重点 */
+        .album-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); 
+            gap: 15px; 
+            width: 100%;
+        }
+        .album-item { 
+            width: 100%; 
+            aspect-ratio: 1; 
+            object-fit: cover; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            transition: transform 0.2s, box-shadow 0.2s; 
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .album-item:hover { transform: scale(1.03); box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
 
         /* 图片查看器 */
         #image-viewer { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 9999; justify-content: center; align-items: center; }
-        #viewer-img { max-width: 90%; max-height: 90%; }
+        #viewer-img { max-width: 90%; max-height: 90%; border-radius: 4px; }
 
         @media (max-width: 850px) {
             .container { flex-direction: column; }
             .sidebar { width: 100%; position: static; }
-            header { flex-direction: column; align-items: flex-start; }
+            .album-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
         }
     </style>
 </head>
@@ -75,12 +104,12 @@
         <div class="year-bar" id="yearFilter">
             <button class="filter-btn active" onclick="setYear('all', this)">全部</button>
         </div>
-        <div id="contentDisplay">加载数据中...</div>
+        <div id="contentDisplay">正在同步数据...</div>
     </main>
 
     <aside class="sidebar">
         <div class="side-card">
-            <div class="side-title">年度数据</div>
+            <div class="side-title">年度数据看板</div>
             <div class="stat-list">
                 <div class="stat-item"><span id="s-count" class="stat-num">0</span><span class="stat-label">动态条数</span></div>
                 <div class="stat-item"><span id="s-words" class="stat-num">0</span><span class="stat-label">累计字数</span></div>
@@ -90,7 +119,7 @@
         </div>
 
         <div class="side-card">
-            <div class="side-title">高频词汇</div>
+            <div class="side-title">高频词云</div>
             <div id="wordcloud-container">
                 <canvas id="wordcloud-canvas"></canvas>
             </div>
@@ -112,7 +141,7 @@
             globalData = await res.json();
             renderYearBtns();
             render();
-        } catch (e) { document.getElementById('contentDisplay').innerText = "数据加载失败"; }
+        } catch (e) { document.getElementById('contentDisplay').innerText = "数据同步异常，请检查 JSON 格式"; }
     }
 
     function renderYearBtns() {
@@ -169,38 +198,34 @@
         document.getElementById('s-imgs').innerText = imgs;
         document.getElementById('s-music').innerText = music;
 
-        // 尝试绘制词云
         setTimeout(() => drawCloud(textAgg), 200);
     }
 
     function drawCloud(text) {
-        const canvas = document.getElementById('wordcloud-canvas');
         const container = document.getElementById('wordcloud-container');
-        
-        // 简单分词
         const words = text.replace(/[^\u4e00-\u9fa5a-zA-Z]/g, " ").split(/\s+/).filter(w => w.length >= 1);
         
         if (words.length < 10) {
-            container.innerHTML = '<div class="no-data-hint">积攒更多动态<br>以生成词云</div>';
+            container.innerHTML = '<div class="no-data-hint">积攒更多动态文字<br>以生成个人词云</div>';
             return;
         }
         
         container.innerHTML = '<canvas id="wordcloud-canvas"></canvas>';
-        const newCanvas = document.getElementById('wordcloud-canvas');
-        newCanvas.width = container.offsetWidth;
-        newCanvas.height = container.offsetHeight;
+        const canvas = document.getElementById('wordcloud-canvas');
+        canvas.width = container.offsetWidth;
+        canvas.height = 200;
 
         const freqMap = {};
         words.forEach(w => freqMap[w] = (freqMap[w] || 0) + 1);
         const list = Object.entries(freqMap).sort((a,b) => b[1]-a[1]).slice(0, 30);
 
-        WordCloud(newCanvas, { 
+        WordCloud(canvas, { 
             list, 
             gridSize: 8, 
-            weightFactor: size => Math.pow(size, 1.1) * (newCanvas.width / 120),
+            weightFactor: size => Math.pow(size, 1.1) * (canvas.width / 150),
             color: 'random-dark',
             backgroundColor: 'transparent',
-            rotateRatio: 0
+            rotateRatio: 0.2
         });
     }
 
@@ -215,7 +240,7 @@
             }
             card.innerHTML = `
                 <img src="${getCDNUrl('images/avatar.jpg')}" class="item-avatar">
-                <div style="flex:1">
+                <div style="flex:1; min-width:0;">
                     <div style="color:var(--accent-color); font-weight:bold;">亚离解星</div>
                     <div id="t-${idx}" class="moment-text collapsed">${item.text}</div>
                     <div id="b-${idx}" class="expand-btn" style="display:none" onclick="toggle(${idx})">全文</div>
@@ -235,7 +260,9 @@
         data.forEach(item => {
             if (item.imgs) item.imgs.forEach(img => {
                 const el = document.createElement('img');
-                el.className = 'album-item'; el.src = getCDNUrl(img);
+                el.className = 'album-item'; 
+                el.src = getCDNUrl(img);
+                el.loading = "lazy";
                 el.onclick = () => view(getCDNUrl(img));
                 grid.appendChild(el);
             });
@@ -249,7 +276,12 @@
         b.innerText = isCol ? '全文' : '收起';
     }
 
-    function view(s) { const v = document.getElementById('image-viewer'); v.querySelector('img').src = s; v.style.display = 'flex'; }
+    function view(s) { 
+        const v = document.getElementById('image-viewer'); 
+        const img = document.getElementById('viewer-img');
+        img.src = s; 
+        v.style.display = 'flex'; 
+    }
 
     init();
 </script>
