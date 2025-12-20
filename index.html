@@ -13,7 +13,7 @@
         nav a { text-decoration: none; color: var(--text-color); font-weight: bold; cursor: pointer; padding: 4px 8px; border-radius: 4px; }
         nav a.active { color: var(--link-color); background: rgba(50, 115, 220, 0.1); }
 
-        /* ✨ 统计面板样式 */
+        /* 统计面板样式 */
         .stats-panel { 
             display: grid; 
             grid-template-columns: repeat(3, 1fr); 
@@ -27,14 +27,14 @@
         .stat-item .num { font-size: 1.4rem; font-weight: bold; color: #576b95; display: block; }
         .stat-item .label { font-size: 0.75rem; color: #666; }
 
-        /* ✨ 词云容器样式 */
+        /* 词云容器样式 */
         #wordcloud-container { 
             width: 100%; 
-            height: 200px; 
+            height: 250px; 
             margin-bottom: 20px; 
             background: rgba(255,255,255,0.2); 
             border-radius: 12px; 
-            display: none; /* 默认隐藏，有数据才显示 */
+            overflow: hidden;
         }
 
         /* 动态卡片样式 */
@@ -43,12 +43,14 @@
         .item-avatar { width: 42px; height: 42px; border-radius: 6px; object-fit: cover; }
         .moment-body { flex-grow: 1; display: flex; flex-direction: column; gap: 8px; overflow: hidden; }
         .moment-author { font-weight: 700; color: #576b95; }
+        
+        /* 文字折叠核心 CSS */
         .moment-text { font-size: 0.95rem; line-height: 1.5; color: var(--text-color); white-space: pre-wrap; word-break: break-all; position: relative; }
         .moment-text.collapsed { max-height: 7.5em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; }
         .expand-btn { color: #576b95; cursor: pointer; font-size: 0.9rem; font-weight: bold; margin-top: 4px; display: none; }
         .moment-date { font-size: 0.75rem; color: #b2b2b2; }
 
-        /* 🎵 音乐/视频/图片样式 */
+        /* 媒体组件样式 */
         .music-share-card { display: flex; align-items: center; background: rgba(0, 0, 0, 0.03); border: 1px solid rgba(0, 0, 0, 0.05); padding: 8px; border-radius: 4px; max-width: 320px; cursor: pointer; transition: background 0.2s; text-decoration: none; color: inherit; }
         .music-share-card:hover { background: rgba(0, 0, 0, 0.06); }
         .music-cover { width: 45px; height: 45px; border-radius: 4px; object-fit: cover; margin-right: 10px; flex-shrink: 0; background: #eee; }
@@ -63,9 +65,11 @@
         .moment-gallery.single img { max-width: 200px; max-height: 200px; width: auto; aspect-ratio: auto; }
         .moment-video { width: 100%; max-width: 450px; border-radius: 8px; }
 
-        /* 通用组件 */
+        /* 过滤按钮 */
         .filter-btn { cursor: pointer; border: none; background: rgba(255,255,255,0.3); padding: 4px 12px; border-radius: 15px; font-size: 0.8rem; }
         .filter-btn.active { background: var(--link-color); color: white; }
+        
+        /* 查看器 */
         #image-viewer { display: none; position: fixed; z-index: 10000; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); backdrop-filter: blur(5px); justify-content: center; align-items: center; }
         #viewer-img { max-width: 90%; max-height: 90%; border-radius: 4px; }
     </style>
@@ -94,7 +98,7 @@
             <div class="stat-item"><span id="stat-words" class="num">0</span><span class="label">总字数</span></div>
         </div>
         <div id="wordcloud-container">
-            <canvas id="wordcloud-canvas" style="width:100%; height:100%;"></canvas>
+            <canvas id="wordcloud-canvas"></canvas>
         </div>
     </div>
 
@@ -108,6 +112,7 @@
 </div>
 
 <script>
+    // --- 配置加速信息 ---
     const GITHUB_USER = "nightola"; 
     const GITHUB_REPO = "blog-moments";
     const GITHUB_BRANCH = "main";
@@ -126,6 +131,7 @@
     const viewer = document.getElementById('image-viewer');
     const viewerImg = document.getElementById('viewer-img');
 
+    // 初始化获取数据
     fetch('data.json')
         .then(res => res.json())
         .then(data => {
@@ -163,12 +169,11 @@
         display.innerHTML = '';
         const filtered = currentYear === 'all' ? globalData : globalData.filter(d => d.year === currentYear);
         
-        // 控制统计面板显示
         const statsHeader = document.getElementById('statsHeader');
         if (currentMode === 'stats') {
             statsHeader.style.display = 'block';
             updateStats(filtered);
-            display.innerHTML = '<p style="text-align:center; color:#666; font-size:0.9rem;">以上是该时段的足迹统计</p>';
+            display.innerHTML = '<p style="text-align:center; color:#666; font-size:0.8rem; margin-top:20px;">—— 以上是该时段的足迹统计 ——</p>';
         } else {
             statsHeader.style.display = 'none';
             if (currentMode === 'moments') renderMoments(filtered);
@@ -176,7 +181,7 @@
         }
     }
 
-    // ✨ 更新统计逻辑
+    // 更新统计数据与词云
     function updateStats(data) {
         let totalWords = 0;
         let totalImgs = 0;
@@ -192,45 +197,51 @@
         document.getElementById('stat-imgs').innerText = totalImgs;
         document.getElementById('stat-words').innerText = totalWords;
 
-        renderWordCloud(allText);
+        // 延迟渲染词云确保容器宽度已生效
+        setTimeout(() => renderWordCloud(allText), 100);
     }
 
-    // ✨ 渲染词云
+    // 渲染词云逻辑
     function renderWordCloud(text) {
         const container = document.getElementById('wordcloud-container');
-        if (!text.trim()) {
+        const canvas = document.getElementById('wordcloud-canvas');
+        
+        if (!text || text.trim().length < 1) {
             container.style.display = 'none';
             return;
         }
         container.style.display = 'block';
-        
-        // 极简分词逻辑：过滤掉单字和常用标点，提取2字以上的词
-        const words = text.replace(/[^\u4e00-\u9fa5a-zA-Z]/g, " ").split(/\s+/);
+
+        // 分词逻辑：去掉符号，提取长度 >= 1 的词
+        const cleanText = text.replace(/[^\u4e00-\u9fa5a-zA-Z0-9]/g, " ");
+        const words = cleanText.split(/\s+/);
         const freqMap = {};
+        
         words.forEach(w => {
-            if (w.length > 1) { // 只统计2个字以上的词
+            if (w.trim().length >= 1) {
                 freqMap[w] = (freqMap[w] || 0) + 1;
             }
         });
 
-        const list = Object.entries(freqMap).sort((a,b) => b[1] - a[1]).slice(0, 30);
-        
-        // 适应容器大小
-        const canvas = document.getElementById('wordcloud-canvas');
+        const list = Object.entries(freqMap)
+            .sort((a,b) => b[1] - a[1])
+            .slice(0, 50);
+
+        // 适配画布大小
         canvas.width = container.offsetWidth;
         canvas.height = container.offsetHeight;
 
         WordCloud(canvas, {
             list: list,
-            gridSize: 8,
+            gridSize: Math.round(16 * canvas.width / 1024),
             weightFactor: function (size) {
-                return Math.pow(size, 1.2) * (canvas.width / 150);
+                return Math.pow(size, 1.1) * (canvas.width / 120);
             },
             fontFamily: 'sans-serif',
             color: 'random-dark',
-            rotateRatio: 0.3,
+            rotateRatio: 0,
             backgroundColor: 'transparent',
-            minSize: 10
+            minSize: 12
         });
     }
 
