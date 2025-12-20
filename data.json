@@ -35,12 +35,7 @@
                 "cover": "http://p1.music.126.net/FppBXTTqz4QFkHo7DLE3TA==/109951172194520509.jpg"
             }
         }
-    ],
-    "posts": [
-        {
-            "title": "我的第一篇 Markdown 文章",
-            "date": "2025-12-21",
-            "file": "post/hello-world.md"
-        }
     ]
+
 }
+
