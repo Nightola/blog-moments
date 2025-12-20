@@ -17,8 +17,7 @@
     "year": "2025",
     "date": "12月21日",
     "text": "分享一段最近拍的视频 🎬",
-    "video": "images/video1.mp4",
-    "imgs": []
+    "video": "videos/video1.mp4",
   }
   ,
   {
@@ -26,20 +25,13 @@
     "date": "12月20日",
     "text": "今日歌单推荐 🎧",
     "music": {
-        "title": "歌曲名称",
-        "artist": "歌手",
-        "url": "音乐文件链接或外链"
+        "title": "アポフェニア（妄想症）",
+        "artist": "黒うさぎ",
+        "url": "https://music.163.com/song?id=2758918682&uct2=U2FsdGVkX1/T5iY7kiFe19qrQR6lh27jLlflyH7isOk="
   }
   ,
-    "imgs": ["images/cover.jpg"]
-  }
-  ,
-  {
-    "year": "2025",
-    "date": "12月19日",
-    "text": "我的动态相册汇总",
-    "album": true,
-    "imgs": ["images/1.jpg", "images/2.jpg", "images/3.jpg", "images/4.jpg"]
+    "imgs": ["http://p1.music.126.net/FppBXTTqz4QFkHo7DLE3TA==/109951172194520509.jpg"]
   }
 ]
+
 
