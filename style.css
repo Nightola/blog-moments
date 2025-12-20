@@ -389,3 +389,73 @@ nav a.active { color: white; background: var(--link-color); }
     .full-row { grid-column: span 1; }
     .db-clock { font-size: 2.2rem; }
 }
+
+/* 精准恢复私信互动 UI */
+.msg-box {
+    padding: 24px !important;
+}
+
+.msg-header {
+    margin-bottom: 20px !important;
+}
+
+.msg-form .input-group {
+    background: rgba(255, 255, 255, 0.3); /* 截图中的浅色透明背景 */
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 20px; /* 大圆角 */
+    padding: 10px;
+    margin-bottom: 15px;
+}
+
+.msg-area {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    min-height: 80px !important;
+    padding: 12px !important;
+    font-size: 15px !important;
+}
+
+.msg-ctrl {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.opt-btn {
+    color: var(--db-sub) !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    opacity: 0.8;
+}
+
+/* 截图中的深色“发射信号”按钮 */
+.msg-btn {
+    background: #333c4d !important; /* 截图中的深灰蓝色 */
+    color: #ffffff !important;
+    padding: 12px 32px !important;
+    border-radius: 18px !important;
+    font-size: 15px !important;
+    font-weight: 800 !important;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.msg-btn:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.2);
+}
+
+/* 底部评论链接样式 */
+.db-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 10px;
+}
+
+.footer-link {
+    font-size: 14px !important;
+    font-weight: 800 !important;
+    color: #71717a !important;
+}
