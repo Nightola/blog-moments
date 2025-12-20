@@ -1,31 +1,56 @@
+/**
+ * Nightola-227 FM 核心逻辑脚本 - 文章增强版
+ * 支持：动态流、纯相册、Markdown长文章读取、实时搜索、数据统计
+ */
+
+// 1. 配置信息
 const GITHUB_USER = "nightola"; 
 const GITHUB_REPO = "blog-moments";
 const GITHUB_BRANCH = "main";
 
-// 全局数据存储
+// 2. 全局状态变量
 let rawData = { moments: [], posts: [] }; 
 let currentMode = 'moments', currentYear = 'all', searchQuery = '';
 
+// 3. CDN 地址转换工具
 const getCDNUrl = url => (!url || url.startsWith('http')) ? url : `https://cdn.jsdelivr.net/gh/${GITHUB_USER}/${GITHUB_REPO}@${GITHUB_BRANCH}/${url}`;
 
+/**
+ * 初始化：从 data.json 获取数据
+ */
 async function init() {
     try {
         const res = await fetch('data.json');
+        if (!res.ok) throw new Error('无法加载 data.json');
         rawData = await res.json();
+        
+        // 如果 JSON 还是旧的数组格式，自动兼容包裹
+        if (Array.isArray(rawData)) {
+            rawData = { moments: rawData, posts: [] };
+        }
+        
         renderYearBtns();
         render();
     } catch (e) {
-        console.error("数据加载失败:", e);
+        console.error("初始化失败:", e);
+        document.getElementById('contentDisplay').innerHTML = `<p style="color:red;text-align:center;">数据初始化失败，请检查文件结构。</p>`;
     }
 }
 
+/**
+ * 渲染年份筛选按钮
+ */
 function renderYearBtns() {
-    // 仅针对动态流进行年份提取
+    if (!rawData.moments) return;
     const years = [...new Set(rawData.moments.map(d => d.year))].sort().reverse();
     const container = document.getElementById('yearFilter');
     container.innerHTML = `<button class="filter-btn active" onclick="setYear('all', this)">全部</button>`;
     years.forEach(year => {
-        container.innerHTML += `<button class="filter-btn" onclick="setYear('${year}', this)">${year}</button>`;
+        const btn = document.createElement('button');
+        btn.className = 'filter-btn';
+        btn.innerText = year;
+        btn.onclick = (e) => setYear(year, e.target);
+        container.appendChild(btn);
     });
 }
 
@@ -36,37 +61,48 @@ function setYear(year, btn) {
     render();
 }
 
+/**
+ * 导航模式切换
+ */
 function setMode(mode) {
     currentMode = mode;
     document.querySelectorAll('#modeNav a').forEach(a => a.classList.remove('active'));
     document.getElementById('nav-' + mode).classList.add('active');
     
-    // 切换到文章模式时，隐藏年份筛选栏以保持整洁
-    document.getElementById('yearFilter').style.display = (mode === 'posts') ? 'none' : 'flex';
+    // 切换到文章模式时隐藏年份筛选，动态/相册模式显示
+    const yearBar = document.getElementById('yearFilter');
+    if (yearBar) yearBar.style.display = (mode === 'posts') ? 'none' : 'flex';
+    
     render();
 }
 
+/**
+ * 实时搜索处理
+ */
 function handleSearch() {
     searchQuery = document.getElementById('searchInput').value;
     render();
 }
 
+/**
+ * 核心渲染分发
+ */
 function render() {
     const display = document.getElementById('contentDisplay');
     display.innerHTML = '';
 
-    // 1. 处理动态和相册的过滤
-    const filteredMoments = rawData.moments.filter(item => {
+    // 过滤动态数据
+    const filteredMoments = (rawData.moments || []).filter(item => {
         const matchesYear = (currentYear === 'all' || item.year === currentYear);
         const matchesSearch = (item.text || "").toLowerCase().includes(searchQuery.toLowerCase());
         return matchesYear && matchesSearch;
     });
 
+    // 无论在哪个页面，侧边栏数据统计始终基于“动态流”
     updateSidebar(filteredMoments);
 
-    // 2. 路由分发
     if (currentMode === 'posts') {
-        renderPostList(rawData.posts, display);
+        renderPostList(rawData.posts || [], display);
     } else if (currentMode === 'moments') {
         renderMoments(filteredMoments, display);
     } else if (currentMode === 'album') {
@@ -74,22 +110,27 @@ function render() {
     }
 }
 
-// --- 文章渲染逻辑 ---
+// ==================== 文章模式逻辑 ====================
+
 function renderPostList(posts, container) {
     // 搜索过滤文章标题
     const filteredPosts = posts.filter(p => p.title.toLowerCase().includes(searchQuery.toLowerCase()));
     
     if (filteredPosts.length === 0) {
-        container.innerHTML = '<p style="text-align:center;color:#888;">没有找到相关文章</p>';
+        container.innerHTML = '<p style="text-align:center;color:#888;margin-top:50px;">未找到匹配的文章</p>';
         return;
     }
 
     filteredPosts.forEach(post => {
         const div = document.createElement('div');
-        div.className = 'post-item'; // 记得在 style.css 加入对应的样式
-        div.style = "background:rgba(255,255,255,0.3); padding:15px; border-radius:12px; margin-bottom:15px; cursor:pointer;";
-        div.innerHTML = `<div style="font-weight:bold; color:var(--accent-color);">${post.title}</div>
-                         <div style="font-size:0.8rem; color:#888;">${post.date}</div>`;
+        div.className = 'post-item';
+        div.style = "background:rgba(255,255,255,0.3); padding:20px; border-radius:12px; margin-bottom:15px; cursor:pointer; transition:0.3s; border:1px solid rgba(255,255,255,0.2);";
+        div.innerHTML = `
+            <div style="font-weight:bold; color:var(--accent-color); font-size:1.1rem; margin-bottom:5px;">${post.title}</div>
+            <div style="font-size:0.8rem; color:#888;">发布于 ${post.date}</div>
+        `;
+        div.onmouseover = () => div.style.background = "rgba(255,255,255,0.6)";
+        div.onmouseout = () => div.style.background = "rgba(255,255,255,0.3)";
         div.onclick = () => loadMarkdown(post.file);
         container.appendChild(div);
     });
@@ -97,22 +138,38 @@ function renderPostList(posts, container) {
 
 async function loadMarkdown(path) {
     const display = document.getElementById('contentDisplay');
-    display.innerHTML = "正在加载文章...";
+    display.innerHTML = '<div style="text-align:center;padding:50px;">正在加载文章内容...</div>';
+    
+    // 使用 CDN 工具确保路径正确
+    const fullUrl = getCDNUrl(path);
+
     try {
-        const res = await fetch(path);
+        const res = await fetch(fullUrl);
+        if (!res.ok) throw new Error(`HTTP 错误! 状态码: ${res.status}`);
         const md = await res.text();
-        // 使用 marked 渲染 MD
-        display.innerHTML = `<div class="markdown-body" style="text-align:left;">
-                                ${marked.parse(md)}
-                                <hr style="margin:20px 0; opacity:0.2;">
-                                <button onclick="setMode('posts')" style="cursor:pointer; padding:5px 15px; border-radius:5px; border:none; background:var(--accent-color); color:white;">返回列表</button>
-                             </div>`;
+        
+        // 渲染 Markdown
+        display.innerHTML = `
+            <div class="markdown-body" style="text-align:left; animation: fadeIn 0.5s;">
+                ${marked.parse(md)}
+                <hr style="margin:30px 0; opacity:0.1;">
+                <button onclick="setMode('posts')" style="cursor:pointer; padding:8px 20px; border-radius:20px; border:none; background:var(--accent-color); color:white; font-weight:bold;">← 返回列表</button>
+            </div>`;
+        window.scrollTo(0, 0); // 自动回滚到顶部
     } catch (e) {
-        display.innerHTML = "读取文章失败，请确认文件路径。";
+        console.error("加载文章失败:", e);
+        display.innerHTML = `
+            <div style="text-align:center; padding:50px; color:#cc0000;">
+                <h3>读取文章失败</h3>
+                <p>尝试访问路径：${path}</p>
+                <p>请确认文件已上传至 post 文件夹，且 data.json 中的文件名大小写一致。</p>
+                <button onclick="setMode('posts')" style="margin-top:20px;">返回列表</button>
+            </div>`;
     }
 }
 
-// --- 原有功能逻辑 (统计/动态/相册) ---
+// ==================== 原有功能逻辑 ====================
+
 function updateSidebar(data) {
     let words = 0, imgs = 0, music = 0, textAgg = "";
     data.forEach(item => {
@@ -128,11 +185,10 @@ function updateSidebar(data) {
     setTimeout(() => drawCloud(textAgg), 200);
 }
 
-// 绘制词云 (保持原样)
 function drawCloud(text) {
     const container = document.getElementById('wordcloud-container');
     const words = text.replace(/[^\u4e00-\u9fa5a-zA-Z]/g, " ").split(/\s+/).filter(w => w.length >= 1);
-    if (words.length < 5) { container.innerHTML = '<div class="no-data-hint">字数较少...</div>'; return; }
+    if (words.length < 5) { container.innerHTML = '<div class="no-data-hint">积累动态中...</div>'; return; }
     container.innerHTML = '<canvas id="wordcloud-canvas"></canvas>';
     const canvas = document.getElementById('wordcloud-canvas');
     canvas.width = container.offsetWidth; canvas.height = 200;
