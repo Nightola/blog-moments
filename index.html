@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>动态 - nightola-227 fm</title>
+    <style>
+        /* 这里放入你最开始提供给我的那段长长的博客 CSS */
+        :root { --width: 720px; --text-color: #444; --link-color: #3273dc; }
+        body { font-family: sans-serif; margin: auto; padding: 20px; max-width: var(--width); background-image: url("https://pic1.imgdb.cn/item/6946acea29a616e528622615.jpg"); background-attachment: fixed; background-size: cover; }
+        main { background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(10px); padding: 25px; border-radius: 16px; min-height: 400px; }
+        nav { margin-bottom: 20px; display: flex; gap: 10px; }
+        nav a { text-decoration: none; color: var(--text-color); font-weight: bold; }
+
+        /* 动态卡片专属 CSS */
+        .moment-card { padding: 20px 0; border-bottom: 1px solid rgba(0, 0, 0, 0.05); display: flex; gap: 12px; }
+        .moment-avatar-wrap { flex-shrink: 0; }
+        .item-avatar { width: 42px; height: 42px; border-radius: 6px; object-fit: cover; }
+        .moment-body { flex-grow: 1; display: flex; flex-direction: column; gap: 8px; }
+        .moment-author { font-weight: 700; color: #576b95; }
+        .moment-text { font-size: 0.95rem; line-height: 1.5; color: var(--text-color); white-space: pre-wrap; }
+        .moment-gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; max-width: 450px; margin-top: 5px; }
+        .moment-gallery img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 4px; cursor: pointer; }
+        .moment-gallery.single { display: block; }
+        .moment-gallery.single img { max-width: 200px; max-height: 200px; width: auto; aspect-ratio: auto; }
+        .moment-date { font-size: 0.75rem; color: #b2b2b2; }
+
+        /* 筛选按钮样式 */
+        .filter-btn { cursor: pointer; border: none; background: rgba(255,255,255,0.3); padding: 4px 12px; border-radius: 15px; font-size: 0.8rem; }
+        .filter-btn.active { background: var(--link-color); color: white; }
+
+        /* 大图遮罩 */
+        #image-viewer { display: none; position: fixed; z-index: 10000; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); backdrop-filter: blur(5px); justify-content: center; align-items: center; }
+        #viewer-img { max-width: 90%; max-height: 90%; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>nightola-227 fm</h1>
+    <nav>
+        <a href="index.html">首页</a>
+        <a href="#" style="color: var(--link-color)">动态</a>
+    </nav>
+</header>
+
+<main>
+    <div id="filterNav" style="margin-bottom: 20px; display: flex; gap: 8px; flex-wrap: wrap;">
+        <button class="filter-btn active" id="btn-all">全部</button>
+    </div>
+
+    <div id="momentsList">
+        <p style="text-align: center; color: #888;">正在加载动态...</p>
+    </div>
+</main>
+
+<div id="image-viewer" onclick="this.style.display='none'">
+    <img id="viewer-img" src="">
+</div>
+
+<script>
+    const list = document.getElementById('momentsList');
+    const nav = document.getElementById('filterNav');
+    const viewer = document.getElementById('image-viewer');
+    const viewerImg = document.getElementById('viewer-img');
+
+    // 获取并运行数据
+    fetch('data.json')
+        .then(res => res.json())
+        .then(data => {
+            renderList(data, 'all'); // 初始加载全部
+            initNav(data);          // 初始化年份按钮
+        })
+        .catch(err => {
+            list.innerHTML = `<p style="color:red">加载失败，请检查 data.json 是否存在或格式正确。<br>注意：本地双击打开无法加载，请上传到 GitHub 或使用本地服务器。</p>`;
+        });
+
+    // 初始化年份按钮
+    function initNav(allData) {
+        const years = [...new Set(allData.map(d => d.year))].sort().reverse();
+        const allBtn = document.getElementById('btn-all');
+        
+        allBtn.onclick = () => {
+            setActive(allBtn);
+            renderList(allData, 'all');
+        };
+
+        years.forEach(year => {
+            const btn = document.createElement('button');
+            btn.className = 'filter-btn';
+            btn.innerText = year;
+            btn.onclick = () => {
+                setActive(btn);
+                renderList(allData, year);
+            };
+            nav.appendChild(btn);
+        });
+    }
+
+    function setActive(btn) {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+    }
+
+    // 渲染动态列表
+    function renderList(allData, filterYear) {
+        list.innerHTML = '';
+        const filtered = filterYear === 'all' ? allData : allData.filter(d => d.year === filterYear);
+        
+        if(filtered.length === 0) {
+            list.innerHTML = '<p style="text-align:center; color:#888;">该年份暂无动态</p>';
+            return;
+        }
+
+        filtered.forEach(item => {
+            const isSingle = item.imgs.length === 1;
+            const imgHtml = item.imgs.map(src => 
+                `<img src="${src}" loading="lazy" onclick="event.stopPropagation(); openViewer('${src}')">`
+            ).join('');
+            
+            const card = document.createElement('div');
+            card.className = 'moment-card';
+            card.innerHTML = `
+                <div class="moment-avatar-wrap">
+                    <img src="images/avatar.jpg" class="item-avatar">
+                </div>
+                <div class="moment-body">
+                    <div class="moment-author">nightola-227</div>
+                    <div class="moment-text">${item.text}</div>
+                    <div class="moment-gallery ${isSingle ? 'single' : ''}">${imgHtml}</div>
+                    <div class="moment-date">${item.date}</div>
+                </div>
+            `;
+            list.appendChild(card);
+        });
+    }
+
+    function openViewer(src) {
+        viewerImg.src = src;
+        viewer.style.display = 'flex';
+    }
+</script>
+
+</body>
+</html>
