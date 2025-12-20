@@ -85,3 +85,19 @@ nav a.active { color: white; background: var(--link-color); }
     .container { flex-direction: column; }
     .sidebar { width: 100%; position: static; }
 }
+
+.search-box input {
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(0,0,0,0.1);
+    background: rgba(255,255,255,0.4);
+    box-sizing: border-box; /* 确保不溢出 */
+    outline: none;
+    transition: 0.3s;
+}
+
+.search-box input:focus {
+    border-color: var(--accent-color);
+    background: rgba(255,255,255,0.8);
+}
