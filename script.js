@@ -1,73 +1,61 @@
 /**
- * Nightola-227 FM 核心逻辑脚本 - 最终修复版
+ * Nightola-227 FM 综合管理脚本
+ * 包含：动态、相册、Markdown长文章、Formspree提问箱
  */
 
-// 1. 配置信息
+// 1. 基础配置
 const GITHUB_USER = "nightola"; 
 const GITHUB_REPO = "blog-moments";
 const GITHUB_BRANCH = "main";
+const FORMSPREE_ID = "xblnqnen"; // 你的 Formspree ID
 
-// 2. 状态变量
+// 2. 全局状态
 let rawData = { moments: [], posts: [] }; 
 let currentMode = 'moments', currentYear = 'all', searchQuery = '';
 
-// 3. 路径工具：媒体走CDN，MD走原始路径
+// 3. 工具函数
 const getCDNUrl = url => (!url || url.startsWith('http')) ? url : `https://cdn.jsdelivr.net/gh/${GITHUB_USER}/${GITHUB_REPO}@${GITHUB_BRANCH}/${url}`;
-// 获取 GitHub Pages 的原始绝对路径
 const getRawUrl = path => `https://${GITHUB_USER}.github.io/${GITHUB_REPO}/${path}`;
 
+/**
+ * 页面初始化
+ */
 async function init() {
     try {
-        // 读取 JSON，加上随机数防止被浏览器强行缓存旧数据
         const res = await fetch('data.json?t=' + Date.now());
         rawData = await res.json();
         if (Array.isArray(rawData)) rawData = { moments: rawData, posts: [] };
+        
         renderYearBtns();
         render();
     } catch (e) {
-        console.error("加载数据失败:", e);
+        console.error("数据加载失败:", e);
     }
 }
 
 /**
- * 核心：读取并渲染 Markdown
+ * 导航切换
  */
-async function loadMarkdown(path) {
-    const display = document.getElementById('contentDisplay');
-    display.innerHTML = '<div style="text-align:center;padding:50px;">正在获取文章内容...</div>';
+function setMode(mode) {
+    currentMode = mode;
+    document.querySelectorAll('#modeNav a').forEach(a => a.classList.remove('active'));
+    document.getElementById('nav-' + mode).classList.add('active');
     
-    // 强制使用绝对路径访问 GitHub Pages 上的文件
-    const targetUrl = getRawUrl(path);
-
-    try {
-        const res = await fetch(targetUrl, { cache: "no-cache" }); 
-        if (!res.ok) throw new Error(`服务器响应异常: ${res.status}`);
-        const md = await res.text();
-        
-        display.innerHTML = `
-            <div class="markdown-body" style="text-align:left; animation: fadeIn 0.4s ease-out;">
-                ${marked.parse(md)}
-                <hr style="margin:30px 0; opacity:0.1;">
-                <button onclick="setMode('posts')" style="cursor:pointer; padding:8px 20px; border-radius:20px; border:none; background:var(--accent-color); color:white; font-weight:bold;">← 返回列表</button>
-            </div>`;
-        window.scrollTo(0, 0);
-    } catch (e) {
-        display.innerHTML = `
-            <div style="text-align:center; padding:50px; color:#cc0000;">
-                <h3>抓取文章失败</h3>
-                <p>尝试地址：<a href="${targetUrl}" target="_blank">${targetUrl}</a></p>
-                <p>错误详情：${e.message}</p>
-                <small>既然手动能打开，请尝试按下 <b>Ctrl + F5</b> 强制刷新网页缓存。</small>
-            </div>`;
-    }
+    // 仅在动态/相册模式显示年份条
+    const yearBar = document.getElementById('yearFilter');
+    if (yearBar) yearBar.style.display = (mode === 'moments' || mode === 'album') ? 'flex' : 'none';
+    
+    render();
 }
 
-// ==================== 渲染逻辑 ====================
-
+/**
+ * 核心渲染逻辑
+ */
 function render() {
     const display = document.getElementById('contentDisplay');
     display.innerHTML = '';
 
+    // 过滤动态数据（供侧边栏统计使用）
     const filteredMoments = (rawData.moments || []).filter(item => {
         const matchesYear = (currentYear === 'all' || item.year === currentYear);
         const matchesSearch = (item.text || "").toLowerCase().includes(searchQuery.toLowerCase());
@@ -76,14 +64,96 @@ function render() {
 
     updateSidebar(filteredMoments);
 
-    if (currentMode === 'posts') {
-        renderPostList(rawData.posts || [], display);
-    } else if (currentMode === 'moments') {
-        renderMoments(filteredMoments, display);
-    } else if (currentMode === 'album') {
-        renderAlbum(filteredMoments, display);
+    // 根据模式分发渲染
+    switch(currentMode) {
+        case 'moments': renderMoments(filteredMoments, display); break;
+        case 'album': renderAlbum(filteredMoments, display); break;
+        case 'posts': renderPostList(rawData.posts || [], display); break;
+        case 'qna': renderQnA(display); break;
     }
 }
+
+// ==================== 模块一：提问箱 (QnA) ====================
+
+function renderQnA(container) {
+    // 渲染提问表单和存档容器
+    container.innerHTML = `
+        <div class="qna-container">
+            <article class="qna-card">
+                <div class="section-title">📮 提问箱</div>
+                <textarea id="newQuestionInput" class="db-input" placeholder="在这里 write 下你的问题...提问将被筛选展示。" rows="3"></textarea>
+                <div class="qna-options">
+                    <label class="qna-check"><input type="checkbox" id="newPrivateReplyCheck"><span>回复后不公开提问</span></label>
+                    <label class="qna-check"><input type="checkbox" id="newNotifyCheck"><span>接收回复通知</span></label>
+                </div>
+                <input type="email" id="newEmailInput" class="db-input" placeholder="想收到回复请填邮箱" style="display:none;">
+                <button id="newSubmitQuestionBtn" class="db-btn">发送提问</button>
+                <div id="newFormMessage" style="text-align:center; margin-top:10px; font-size:12px;"></div>
+            </article>
+            <div class="qna-divider"></div>
+            <article class="qna-card">
+                <div class="section-title"><span>🔍 往期存档</span></div>
+                <div id="qnaList">
+                    <p style="text-align:center; padding:20px; opacity:0.5;">正在加载历史问答...</p>
+                </div>
+            </article>
+        </div>
+    `;
+
+    // 绑定表单事件
+    const notifyCheck = document.getElementById('newNotifyCheck');
+    const emailInput = document.getElementById('newEmailInput');
+    const submitBtn = document.getElementById('newSubmitQuestionBtn');
+
+    notifyCheck.onchange = (e) => emailInput.style.display = e.target.checked ? 'block' : 'none';
+
+    submitBtn.onclick = async () => {
+        const text = document.getElementById('newQuestionInput').value.trim();
+        if(!text) return;
+        submitBtn.disabled = true;
+        submitBtn.innerText = "发送中...";
+        
+        const fd = new FormData();
+        fd.append("question", text);
+        fd.append("private", document.getElementById('newPrivateReplyCheck').checked);
+        if(notifyCheck.checked) fd.append("email", emailInput.value);
+
+        try {
+            const res = await fetch(`https://formspree.io/f/${FORMSPREE_ID}`, {
+                method: "POST", body: fd, headers: { Accept: "application/json" }
+            });
+            if(res.ok) {
+                document.getElementById('newFormMessage').innerHTML = "<span style='color:#10b981'>发送成功！请耐心等待回复。</span>";
+                document.getElementById('newQuestionInput').value = "";
+            }
+        } catch(e) {
+            document.getElementById('newFormMessage').innerHTML = "<span style='color:#ef4444'>发送失败，请稍后再试。</span>";
+        }
+        submitBtn.disabled = false;
+        submitBtn.innerText = "发送提问";
+    };
+
+    // 渲染历史问答（这里可以直接写死，也可以从 data.json 读取）
+    // 为了方便你直接运行，我先写在脚本内，你可以根据需要迁移到 data.json
+    const qnaData = [
+        {q: "为什么要创建博客？", a: "简单打个比方吧，你可以把这个博客当作我在这个网络世界里自定义程度比较高的小房子...", time: "2025-12-13 01:30"},
+        {q: "「Nightola-227 FM」的由来？", a: "这个名字最初是 2022 年年初用 Apple Music 的时候给一个歌单起的名字...", time: "2025-12-13 01:51"}
+        // ... 更多问题在此添加
+    ];
+
+    const qnaList = document.getElementById('qnaList');
+    qnaList.innerHTML = qnaData.map((item, index) => `
+        <div class="qna-item visible ${index === 0 ? 'active' : ''}">
+            <div class="qna-q" onclick="this.parentElement.classList.toggle('active')">${item.q}</div>
+            <div class="qna-a">
+                <p>${item.a}</p>
+                <span class="answer-time">更新于 ${item.time}</span>
+            </div>
+        </div>
+    `).join('');
+}
+
+// ==================== 模块二：长文章 (Markdown) ====================
 
 function renderPostList(posts, container) {
     const filtered = posts.filter(p => p.title.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -94,14 +164,33 @@ function renderPostList(posts, container) {
     filtered.forEach(post => {
         const div = document.createElement('div');
         div.className = 'post-item';
-        div.style = "background:rgba(255,255,255,0.3); padding:20px; border-radius:12px; margin-bottom:15px; cursor:pointer; border:1px solid rgba(255,255,255,0.2); transition: 0.3s;";
-        div.innerHTML = `<div style="font-weight:bold; color:var(--accent-color); font-size:1.1rem; margin-bottom:5px;">${post.title}</div><div style="font-size:0.8rem; color:#888;">${post.date}</div>`;
-        div.onmouseover = () => div.style.backgroundColor = "rgba(255,255,255,0.6)";
-        div.onmouseout = () => div.style.backgroundColor = "rgba(255,255,255,0.3)";
+        div.style = "background:rgba(255,255,255,0.3); padding:20px; border-radius:12px; margin-bottom:15px; cursor:pointer; border:1px solid rgba(255,255,255,0.2);";
+        div.innerHTML = `<div style="font-weight:bold; color:var(--accent-color); font-size:1.1rem;">${post.title}</div><div style="font-size:0.8rem; opacity:0.6;">${post.date}</div>`;
         div.onclick = () => loadMarkdown(post.file);
         container.appendChild(div);
     });
 }
+
+async function loadMarkdown(path) {
+    const display = document.getElementById('contentDisplay');
+    display.innerHTML = '<div style="text-align:center;padding:50px;">正在抓取文章...</div>';
+    try {
+        const res = await fetch(getRawUrl(path), { cache: "no-cache" });
+        if (!res.ok) throw new Error('文件未找到');
+        const md = await res.text();
+        display.innerHTML = `
+            <div class="markdown-body" style="text-align:left; animation: fadeIn 0.4s;">
+                ${marked.parse(md)}
+                <hr style="margin:30px 0; opacity:0.1;">
+                <button onclick="setMode('posts')" style="cursor:pointer; padding:8px 20px; border-radius:20px; border:none; background:var(--accent-color); color:white;">← 返回列表</button>
+            </div>`;
+        window.scrollTo(0, 0);
+    } catch (e) {
+        display.innerHTML = `<div style="text-align:center; padding:50px; color:#ef4444;">读取文章失败：${e.message}</div>`;
+    }
+}
+
+// ==================== 模块三：动态与相册 ====================
 
 function renderMoments(data, container) {
     data.forEach((item, idx) => {
@@ -145,33 +234,7 @@ function renderAlbum(data, container) {
     container.appendChild(grid);
 }
 
-// ==================== 工具函数 ====================
-
-function renderYearBtns() {
-    if (!rawData.moments) return;
-    const years = [...new Set(rawData.moments.map(d => d.year))].sort().reverse();
-    const container = document.getElementById('yearFilter');
-    container.innerHTML = `<button class="filter-btn active" onclick="setYear('all', this)">全部</button>`;
-    years.forEach(year => {
-        container.innerHTML += `<button class="filter-btn" onclick="setYear('${year}', this)">${year}</button>`;
-    });
-}
-
-function setYear(year, btn) {
-    currentYear = year;
-    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    render();
-}
-
-function setMode(mode) {
-    currentMode = mode;
-    document.querySelectorAll('#modeNav a').forEach(a => a.classList.remove('active'));
-    document.getElementById('nav-' + mode).classList.add('active');
-    const yearBar = document.getElementById('yearFilter');
-    if (yearBar) yearBar.style.display = (mode === 'posts') ? 'none' : 'flex';
-    render();
-}
+// ==================== 模块四：通用功能 (搜索/侧边栏/词云) ====================
 
 function handleSearch() {
     searchQuery = document.getElementById('searchInput').value;
@@ -204,6 +267,23 @@ function drawCloud(text) {
     words.forEach(w => freqMap[w] = (freqMap[w] || 0) + 1);
     const list = Object.entries(freqMap).sort((a,b) => b[1]-a[1]).slice(0, 30);
     WordCloud(canvas, { list, gridSize: 8, weightFactor: size => Math.pow(size, 1.1) * (canvas.width / 150), color: 'random-dark', backgroundColor: 'transparent', rotateRatio: 0 });
+}
+
+function renderYearBtns() {
+    if (!rawData.moments) return;
+    const years = [...new Set(rawData.moments.map(d => d.year))].sort().reverse();
+    const container = document.getElementById('yearFilter');
+    container.innerHTML = `<button class="filter-btn active" onclick="setYear('all', this)">全部</button>`;
+    years.forEach(year => {
+        container.innerHTML += `<button class="filter-btn" onclick="setYear('${year}', this)">${year}</button>`;
+    });
+}
+
+function setYear(year, btn) {
+    currentYear = year;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    render();
 }
 
 function toggle(i) {
