@@ -173,3 +173,23 @@ nav a.active { color: white; background: var(--link-color); }
     .container { flex-direction: column; }
     .sidebar { width: 100%; position: static; }
 }
+
+/* 文章列表样式 */
+.post-item {
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    margin-bottom: 15px;
+    cursor: pointer;
+    transition: 0.3s;
+    border: 1px solid rgba(255,255,255,0.2);
+}
+.post-item:hover { background: rgba(255, 255, 255, 0.6); }
+.post-title { font-size: 1.2rem; font-weight: bold; color: var(--accent-color); }
+.post-date { font-size: 0.8rem; color: #888; }
+
+/* Markdown 渲染后的正文样式 */
+.markdown-body { text-align: left; padding: 10px; }
+.markdown-body h1 { border-bottom: 1px solid #eee; padding-bottom: 10px; }
+.markdown-body img { max-width: 100%; border-radius: 8px; }
+.markdown-body pre { background: #f6f8fa; padding: 16px; border-radius: 6px; overflow: auto; }
