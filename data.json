@@ -15,7 +15,7 @@
             "text": "忙活差不多一天在博客上？好像上午是弄自动读取手机app，下午开始弄博客来着，不过总之确实有成效！MacroDroid这个自动化感觉比Tasker靠谱，界面也比tasker好看。然后我也终于成功简单地美化了一下博客www\n\n新背景真好看呀",
             "imgs": [
                 "images/photo3.jpg",
-                "images/photo4.jpg"
+                "images/photo4.jpg",
                 "images/photo5.jpg",
                 "images/photo6.jpg"
             ]
@@ -36,6 +36,15 @@
                 "url": "https://music.163.com/song?id=2758918682",
                 "cover": "http://p1.music.126.net/FppBXTTqz4QFkHo7DLE3TA==/109951172194520509.jpg"
             }
+        },
+        {
+            "year": "2025",
+            "date": "11月26日 11:30",
+            "text": "我不想让色情网站侮辱我的域名（悲）",
+            "imgs": [
+                "images/photo7.jpg",
+                "images/photo8.jpg"
+            ]
         }
     ]
 }
